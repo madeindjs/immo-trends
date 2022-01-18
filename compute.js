@@ -62,6 +62,18 @@ function getAverage(array) {
   return total / array.length;
 }
 
+/**
+ * @param {number[]} array
+ * @returns {number}
+ */
+function getMedian(array) {
+  array = array.slice(0).sort(function (x, y) {
+    return x - y;
+  });
+  var b = (array.length + 1) / 2;
+  return array.length % 2 ? array[b - 1] : (array[b - 1.5] + array[b - 0.5]) / 2;
+}
+
 function computeSurfacePricesPerZipCode(year) {
   const filepath = files[year];
   const total = parseInt(execSync(`wc -l < ${filepath}`).toString().trim());
@@ -131,7 +143,7 @@ async function compute(year) {
   const averagePricePerZipCode = {};
 
   for (const [zipCode, prices] of Object.entries(surfacePricesPerZipCode)) {
-    averagePricePerZipCode[zipCode] = getAverage(prices);
+    averagePricePerZipCode[zipCode] = getMedian(prices);
   }
 
   fs.writeFileSync(resultFile, JSON.stringify(averagePricePerZipCode, undefined, 2));
