@@ -19,7 +19,7 @@ const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, backgroundColou
 async function drawGraph() {
   /** @type {import("chart.js").ChartDataset[]} */
   const datasets = zipCodes.map((zipCode, index) => {
-    const data = year.map((year) => require(path.join(computesFolder, `${year}.json`))[zipCode]);
+    const data = year.map((year) => require(path.join(computesFolder, `${year}.json`))[zipCode].median);
 
     return { data, label: zipCode, backgroundColor: colors[index], borderColor: colors[index] };
   });

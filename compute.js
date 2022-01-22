@@ -13,6 +13,8 @@ const fields =
 const surface1Index = fields.indexOf("Surface Carrez du 1er lot");
 const surface2Index = fields.indexOf("Surface Carrez du 2eme lot");
 const surface3Index = fields.indexOf("Surface Carrez du 3eme lot");
+const surface4Index = fields.indexOf("Surface Carrez du 4eme lot");
+const surface5Index = fields.indexOf("Surface Carrez du 5eme lot");
 const zipCodeIndex = fields.indexOf("Code postal");
 const priceIndex = fields.indexOf("Valeur fonciere");
 const kindIndex = fields.indexOf("Type local");
@@ -95,7 +97,12 @@ function computeSurfacePricesPerZipCode(year) {
       return;
     }
 
-    const surface = getNumber(row, surface1Index);
+    const surface =
+      (getNumber(row, surface1Index) ?? 0) +
+      (getNumber(row, surface2Index) ?? 0) +
+      (getNumber(row, surface3Index) ?? 0) +
+      (getNumber(row, surface4Index) ?? 0) +
+      (getNumber(row, surface5Index) ?? 0);
 
     if (!surface) {
       return;
@@ -143,7 +150,13 @@ async function compute(year) {
   const averagePricePerZipCode = {};
 
   for (const [zipCode, prices] of Object.entries(surfacePricesPerZipCode)) {
-    averagePricePerZipCode[zipCode] = getMedian(prices);
+    averagePricePerZipCode[zipCode] = {
+      median: getMedian(prices),
+      average: getAverage(prices),
+      count: prices.length,
+      min: Math.min(...prices),
+      max: Math.max(...prices),
+    };
   }
 
   fs.writeFileSync(resultFile, JSON.stringify(averagePricePerZipCode, undefined, 2));
