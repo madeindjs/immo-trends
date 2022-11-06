@@ -7,7 +7,17 @@ const computesFolder = path.join(__dirname, "computes");
 
 const year = fs.readdirSync(computesFolder).map((file) => Number(file.split(".")[0]));
 
-const zipCodes = process.argv.slice(2).map(Number);
+function printHelp() {
+  console.log("npm run draw <key> [...<zip-code>]");
+  console.log("");
+  console.log("exemple: npm run draw <key> [...<zip-code>]");
+  console.log("");
+  console.log("\t key");
+}
+
+const key = process.argv[2];
+
+const zipCodes = process.argv.slice(3).map(Number);
 
 const colors = ["#1abc9c", "#2980b9", "#c0392b", "#f39c12", "#9b59b6", "#2c3e50", "#7f8c8d", "#f1c40f"];
 
@@ -19,7 +29,7 @@ const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, backgroundColou
 async function drawGraph() {
   /** @type {import("chart.js").ChartDataset[]} */
   const datasets = zipCodes.map((zipCode, index) => {
-    const data = year.map((year) => require(path.join(computesFolder, `${year}.json`))[zipCode].median);
+    const data = year.map((year) => require(path.join(computesFolder, `${year}.json`))[zipCode][key]);
 
     return { data, label: zipCode, backgroundColor: colors[index], borderColor: colors[index] };
   });
@@ -45,7 +55,7 @@ async function drawGraph() {
   const image = await chartJSNodeCanvas.renderToBuffer(configuration);
   // const dataUrl = await chartJSNodeCanvas.renderToDataURL(configuration);
   // const stream = chartJSNodeCanvas.renderToStream(configuration);
-  fs.writeFileSync(path.join(__dirname, "graphs", `${zipCodes.join("-")}.png`), image);
+  fs.writeFileSync(path.join(__dirname, "graphs", `${key}-${zipCodes.join("-")}.png`), image);
   // console.log(dataUrl);
 }
 drawGraph();
