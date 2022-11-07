@@ -34,11 +34,11 @@ function isSameStr(a, b) {
 
 /**
  *
- * @param {{zipCode: string, dep: string}} address
- * @returns {Promise<{lat: number, lng: number}>}
+ * @param {{zipCode: string, town: string, street: string, number: string}} address
+ * @returns {Promise<{lat: number, lon: number}>}
  */
 async function find(address) {
-  // const dep = address.zipCode.substring(0, 2);
+  const dep = address.zipCode.substring(0, 2);
 
   const url = path.join(
     __dirname,
@@ -48,32 +48,48 @@ async function find(address) {
     "adresses",
     "latest",
     "csv",
-    `adresses-${address.dep}.csv`
+    `adresses-${dep}.csv`
   );
 
   // const header = await getFirstLineOfFile(url);
 
   // .pipe()
+  const commandParts = [
+    `cat "${url}"`,
+    `grep "${address.zipCode}"`,
+    `grep "${address.town}"`,
+    `grep "${address.street}"`,
+  ];
 
-  console.log(`exec: rg -e "${address.zipCode}" "${url}"`);
+  const command = commandParts.join(" | ");
+
+  console.log(`exec: ${command}`);
 
   return new Promise((resolve, reject) => {
-    const stream = spawn("rg", ["-e", address.zipCode, "-e", "code_postal", url])
+    const stream = spawn("sh", ["-c", command])
       .stdout.pipe(parser)
       .on("data", (row) => {
         // console.log(row, address.zipCode);
         if (!isSameStr(row["code_postal"], address.zipCode)) return;
+        if (!isSameStr(row["nom_voie"], address.street)) return;
+        if (!isSameStr(row["nom_commune"], address.town)) return;
+        if (!isSameStr(row["numero"], address.number)) return;
+
+        console.log("data", row);
 
         if (true) {
           console.log(row);
-          resolve({ lat: Number(row["lat"]), lng: Number(row["lon"]) });
           stream.destroy();
+          resolve({ lat: Number(row["lat"]), lon: Number(row["lon"]) });
         }
       })
       .on("error", (err) => {
         console.error(`error with ${url}`, err);
         reject(err);
-      });
+      })
+      .on('end', () => {
+        stream.destroy()
+      })
   });
 
   // for await (const record of stream) {
@@ -84,7 +100,23 @@ async function find(address) {
   //   // await new Promise((resolve) => setTimeout(resolve, 100));
   // }
 
-  // return { lat: 1, lng: 2 };
+  // return { lat: 1, lon: 2 };
 }
 
 module.exports = { find };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

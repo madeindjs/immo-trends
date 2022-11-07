@@ -18,15 +18,15 @@ async function transformerHandler(row) {
   const zipCode = row["Code postal"];
   // const dep = row["Code departement"];
 
-  const { lat, lng } = await find({ zipCode, dep }).catch(() => ({ lat: 0, lng: 0 }));
+  const { lat, lon } = await find({ zipCode, dep }).catch(() => ({ lat: 0, lon: 0 }));
 
-  console.log(lat, lng);
+  console.log(lat, lon);
 
   return {
     zipCode,
     mutationDate: transformDateFrToISO(row["Date mutation"]),
     lat,
-    lng,
+    lon,
   };
 }
 
@@ -57,3 +57,4 @@ process.stdin
   .on("end", (data) => {
     console.log("end");
   });
+
