@@ -1,14 +1,7 @@
-// @ts-check
 const { parse, transform, stringify } = require("csv");
-// const {parse} = require('csv-parse')
-// const { createReadStream, createWriteStream } = require("fs");
 const { transformDateFrToISO } = require("./utils");
 
-const { find } = require("address-to-geo");
-
-// function handler(data) {
-//   console.log("receive", data);
-// }
+const { findByAddress } = require("address-to-geo");
 
 const parser = parse({ delimiter: "|", toLine: 5, columns: true });
 
@@ -18,7 +11,12 @@ async function transformerHandler(row) {
   const zipCode = row["Code postal"];
   // const dep = row["Code departement"];
 
-  const { lat, lon } = await find({ zipCode, dep }).catch(() => ({ lat: 0, lon: 0 }));
+  const { lat, lon } = await findByAddress({
+    zipCode,
+    number: row["No voie"],
+    street: row["Voie"],
+    town: row["Commune"],
+  }).catch(() => ({ lat: 0, lon: 0 }));
 
   console.log(lat, lon);
 
@@ -32,9 +30,6 @@ async function transformerHandler(row) {
 
 const transformer = transform((row, callback) =>
   transformerHandler(row).then((row) => {
-    // if (row.zipCode) {
-    // }
-
     callback(null, row);
   })
 );
@@ -53,8 +48,7 @@ process.stdin
   .pipe(transformer)
   .pipe(stringifier)
   .pipe(process.stdout)
-  // .on("data", handler)
   .on("end", (data) => {
+    // TODO close db connection
     console.log("end");
   });
-

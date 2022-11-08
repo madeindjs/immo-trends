@@ -1,22 +1,14 @@
-const fs = require("fs");
-const readline = require("readline");
-
 /**
  *
- * @param {string} pathToFile
- * @returns {Promise<string>}
+ * @param {string} zipCode
+ * @returns {string}
  */
-async function getFirstLineOfFile(pathToFile) {
-  const readable = fs.createReadStream(pathToFile);
-  const reader = readline.createInterface({ input: readable });
-  const line = await new Promise((resolve) => {
-    reader.on("line", (line) => {
-      reader.close();
-      resolve(line);
-    });
-  });
-  readable.close();
-  return line;
+function completeZipCode(zipCode) {
+  while (zipCode.length < 5) {
+    zipCode = `0${zipCode}`;
+  }
+
+  return zipCode;
 }
 
-module.exports = { getFirstLineOfFile };
+module.exports = { completeZipCode };
