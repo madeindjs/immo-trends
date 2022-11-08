@@ -9,8 +9,12 @@ export function App() {
 
   const [data, setData] = useState<Record<string, unknown[]>>({});
 
+  const years = [2017, 2018];
+
   useEffect(() => {
-    downloadCsv(zipCode, 2017).then((result) => setData({ ...data, "2017": result }));
+    for (const year of years) {
+      downloadCsv(zipCode, year).then((result) => setData({ ...data, [String(year)]: result }));
+    }
   }, [zipCode]);
 
   const sellByYearsLabels = [...Object.keys(data), "2018"];
