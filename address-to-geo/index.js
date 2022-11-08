@@ -1,11 +1,20 @@
 const { completeZipCode } = require("./utils");
+const Knex = require("knex").default;
 
-const knex = require("knex")({
-  client: "sqlite3", // or 'better-sqlite3'
-  connection: {
-    filename: "./france.sqlite",
-  },
-});
+/**
+ * @type {import('knex').Knex}
+ */
+let knex;
+
+function getConnection() {
+  if (knex) return knex;
+
+  return (knex = Knex({ client: "sqlite3", connection: { filename: "./france.sqlite" } }));
+}
+
+function closeConnection() {
+  if (knex) knex.destroy();
+}
 
 /**
  *
@@ -19,7 +28,7 @@ async function findByAddress(address) {
 
   const table = `adresses-${dep}`;
 
-  const record = await knex(table)
+  const record = await getConnection()(table)
     .select(["lon", "lat"])
     .where({
       code_postal: zipCode,
@@ -29,13 +38,26 @@ async function findByAddress(address) {
     })
     .first();
 
-  // console.log(record);
+  // closeConnection();
 
-  // knex.
-
-  if (!record) return { lon: 0, lat: 0 };
+  if (!record) {
+    console.log("Could not find address for ", {
+      code_postal: zipCode,
+      nom_commune: address.town,
+      nom_voie: address.street,
+      numero: address.number,
+    });
+    return { lon: 0, lat: 0 };
+  }
 
   return { lon: Number(record.lon), lat: Number(record.lat) };
 }
 
-module.exports = { findByAddress, _knex: knex };
+module.exports = { findByAddress, getConnection, closeConnection };
+
+
+
+
+
+
+

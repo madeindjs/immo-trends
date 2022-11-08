@@ -1,8 +1,8 @@
-const { findByAddress, _knex } = require("./index");
+const { findByAddress, closeConnection } = require("./index");
 
 describe(findByAddress.name, () => {
   afterAll(() => {
-    _knex.destroy();
+    closeConnection();
   });
 
   it.each([
