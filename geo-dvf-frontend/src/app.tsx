@@ -1,44 +1,13 @@
-import { LineChart } from "chartist";
-import "chartist/dist/index.css";
 import { parse } from "csv-parse/browser/esm/sync";
 import { useEffect, useState } from "preact/hooks";
 import "./app.css";
+import { LineChart } from "./components/line-chart";
 import { SearchForm } from "./components/search-form";
 
 export function App() {
   const [zipCode, setZipCode] = useState("01002");
 
-  const initializeChart = (element: HTMLElement | null) => {
-    if (!element) return;
-
-    new LineChart(
-      element,
-      {
-        labels: ["2017", "2018"],
-        series: [
-          {
-            name: "series-1",
-            data: [8, 9, 10],
-          },
-        ],
-      },
-      {
-        showArea: true,
-        showPoint: false,
-        axisX: {
-          showGrid: false,
-          //   // type: Chartist.FixedScaleAxis,
-          //   // divisor: 100,
-          //   // labelInterpolationFnc: function(value) {
-          //   //   return moment(value).format('MMM D');
-          //   // }
-        },
-        axisY: {
-          showGrid: false,
-        },
-      }
-    );
-  };
+  const [data, setData] = useState<Record<string, unknown[]>>({});
 
   const dep = zipCode.substring(0, 2);
 
@@ -46,15 +15,20 @@ export function App() {
     fetch(`/files.data.gouv.fr/geo-dvf/latest/csv/2017/communes/${dep}/${zipCode}.csv`)
       .then((res) => res.text())
       .then((content) => {
-        const data = parse(content, { columns: true });
-        console.log(data);
+        setData({
+          ...data,
+          "2017": parse(content, { columns: true }),
+        });
       });
   }, [zipCode]);
+
+  const sellByYearsLabels = [...Object.keys(data), "2018"];
+  const sellByYearsData = [...Object.values(data).map((rows) => rows.length), 5];
 
   return (
     <>
       <SearchForm zipCode={zipCode} onZipCodeChange={setZipCode} />
-      <div ref={(el) => initializeChart(el)}></div>
+      <LineChart title="Nombre de mutation par ans" labels={sellByYearsLabels} data={sellByYearsData} />
     </>
   );
 }
