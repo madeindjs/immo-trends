@@ -3,7 +3,7 @@ const { transformDateFrToISO } = require("./utils");
 
 const { findByAddress, closeConnection } = require("address-to-geo");
 
-const parser = parse({ delimiter: "|", toLine: 5, columns: true });
+const parser = parse({ delimiter: "|", toLine: 50, columns: true });
 
 async function transformerHandler(row) {
   // console.log("transformerHandler", row);
@@ -52,6 +52,3 @@ process.stdin
     closeConnection();
     console.log("end");
   });
-
-
-
