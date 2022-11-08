@@ -1,5 +1,4 @@
 import { useEffect, useState } from "preact/hooks";
-import "./app.css";
 import { LineChart } from "./components/line-chart";
 import { SearchForm } from "./components/search-form";
 import { downloadCsv } from "./services/download-csv";
@@ -21,9 +20,23 @@ export function App() {
   const sellByYearsData = [...Object.values(data).map((rows) => rows.length), 5];
 
   return (
-    <>
+    <main class="container-fluid">
+      <nav>
+        <ul>
+          <li>
+            <strong>DVF visualizer</strong>
+          </li>
+        </ul>
+        <ul>
+          <li>
+            <a href="#" role="button">
+              Button
+            </a>
+          </li>
+        </ul>
+      </nav>
       <SearchForm zipCode={zipCode} onZipCodeChange={setZipCode} />
       <LineChart title="Nombre de mutation par ans" labels={sellByYearsLabels} data={sellByYearsData} />
-    </>
+    </main>
   );
 }

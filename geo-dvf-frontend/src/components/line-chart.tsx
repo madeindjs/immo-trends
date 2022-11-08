@@ -25,11 +25,16 @@ export const LineChart: FunctionComponent<Props> = ({ title, labels, data }) => 
             name: "series-1",
             data,
           },
+          {
+            name: "series-2",
+            data: data.map((i) => i * (0.5 + Math.random())),
+          },
         ],
       },
       {
         showArea: true,
         showPoint: false,
+        // series
         axisX: {
           showGrid: false,
           //   // type: Chartist.FixedScaleAxis,
