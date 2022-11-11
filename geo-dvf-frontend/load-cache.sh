@@ -5,7 +5,7 @@ cd public || exit 1
 
 if [[ ! -d files.data.gouv.fr ]]; then
   # echo "/tmp exists";
-  wget -r --no-parent https://files.data.gouv.fr/geo-dvf/latest/
+  wget -nc -r --no-parent https://files.data.gouv.fr/geo-dvf/latest/ -A csv
   # gzip -d adresse.data.gouv.fr/data/ban/adresses/latest/csv/*.gz
 fi
 
