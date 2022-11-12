@@ -1,9 +1,0 @@
-{
-  "name": "immo-trends",
-  "private": true,
-  "workspaces": [
-    "old",
-    "transformer",
-    "address-to-geo"
-  ]
-}
