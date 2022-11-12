@@ -6,7 +6,10 @@ const { createGunzip } = require("zlib");
 const os = require("os");
 const path = require("path");
 const fs = require("fs");
+const fsP = require("fs/promises");
 const { Transform } = require("stream");
+
+const { Stream, Readable } = require("stream");
 
 function fileExists(filepath) {
   return new Promise((resolve, reject) => {
@@ -63,10 +66,28 @@ class ZipCodeStreamFilter extends Transform {
 }
 
 async function getDvfForZipCodeStream(year, zipCode) {
+  const cachedFilename = path.join(os.tmpdir(), `geo-dvf-api-${getDvfForZipCodeStream.name}-${year}-${zipCode}.csv`);
+
+  if (await fileExists(cachedFilename)) {
+    const buff = await fsP.readFile(cachedFilename);
+    const rowsStr = buff.toString("utf-8");
+
+    return Readable.from(JSON.parse(rowsStr));
+  }
+
   const dep = zipCode.substring(0, 2);
   const url = `https://files.data.gouv.fr/geo-dvf/latest/csv/${year}/departements/${dep}.csv.gz`;
+  const stream = (await parseCsvGzFromUrl(url)).pipe(new ZipCodeStreamFilter(zipCode));
 
-  return (await parseCsvGzFromUrl(url)).pipe(new ZipCodeStreamFilter(zipCode));
+  // cache
+
+  const rows = [];
+
+  stream
+    .on("data", (row) => rows.push(row))
+    .on("end", () => fs.writeFile(cachedFilename, JSON.stringify(rows), () => {}));
+
+  return stream;
 }
 
 module.exports = { getDvfForZipCodeStream };
