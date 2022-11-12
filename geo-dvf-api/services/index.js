@@ -8,6 +8,8 @@ const { createGunzip } = require("zlib");
 const os = require("os");
 const path = require("path");
 const fs = require("fs");
+const { getSurface } = require("./record");
+const { median } = require("./math");
 
 function fileExists(filepath) {
   return new Promise((resolve, reject) => {
@@ -65,7 +67,9 @@ class ZipCodeStreamFilter extends Transform {
 
 /**
  * @typedef Data
- * @property {number} count
+ * @property {Record<string, number>} count
+ * @property {Record<string, number>} usedCount
+ * @property {Record<string, number>} pricePerM2Median
  */
 
 /**
@@ -79,15 +83,50 @@ async function getData(year, zipCode) {
   const stream = (await parseCsvGzFromUrl(url)).pipe(new ZipCodeStreamFilter(zipCode));
 
   /** @type {Data} */
-  const result = { count: 0 };
+  const result = { count: {}, usedCount: {}, pricePerM2Median: {} };
+
+  /** @type {Record<string, number[]>} */
+  const surfaces = {};
+  /** @type {Record<string, number[]>} */
+  const pricesPerM2 = {};
 
   return new Promise((resolve, reject) => {
     stream
+
       .on("data", (row) => {
-        result.count++;
+        // console.log(row);
+        const kind = row["type_local"];
+        const price = Number(row["valeur_fonciere"]);
+
+        const surface = getSurface(row);
+
+        surfaces[kind] ??= [];
+        surfaces[kind].push(surface);
+
+        if (surface && price) {
+          const pricePerM2 = price / surface;
+          // console.log("surface", { surface, price });
+          // if (! pricesPerM2[kind])
+
+          pricesPerM2[kind] ??= [];
+          pricesPerM2[kind].push(pricePerM2);
+
+          result.usedCount[kind] ??= 0;
+          result.usedCount[kind]++;
+        }
+
+        result.count[kind] ??= 0;
+        result.count[kind]++;
       })
       .on("error", (error) => reject(error))
-      .on("end", () => resolve(result));
+      .on("end", () => {
+        result.pricePerM2Median = Object.entries(pricesPerM2).reduce((acc, [kind, prices]) => {
+          acc[kind] = median(prices);
+          return acc;
+        }, {});
+
+        resolve(result);
+      });
   });
 }
 
