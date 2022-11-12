@@ -3,11 +3,11 @@
 cd public || exit 1
 
 
-if [[ ! -d files.data.gouv.fr ]]; then
+#if [[ ! -d files.data.gouv.fr ]]; then
   # echo "/tmp exists";
   wget -nc -r --no-parent https://files.data.gouv.fr/geo-dvf/latest/ -A csv
   # gzip -d adresse.data.gouv.fr/data/ban/adresses/latest/csv/*.gz
-fi
+#fi
 
 # if [ ! -f france.sqlite ]; then
 #   for csv_file in adresse.data.gouv.fr/data/ban/adresses/latest/csv/*.csv; do
