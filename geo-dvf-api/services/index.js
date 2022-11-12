@@ -1,15 +1,45 @@
 // @ts-ignore
 const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
+const sanitize = require("sanitize-filename");
 
-const { count } = require("console");
 const { parse } = require("csv-parse");
 const { Transform } = require("stream");
 const { createGunzip } = require("zlib");
+const os = require("os");
+const path = require("path");
+const fs = require("fs");
+
+function fileExists(filepath) {
+  return new Promise((resolve, reject) => {
+    fs.stat(filepath, (err) => {
+      if (err == null) {
+        resolve(true);
+      } else if (err.code === "ENOENT") {
+        resolve(false);
+      } else {
+        reject(err.code);
+      }
+    });
+  });
+}
 
 async function parseCsvGzFromUrl(url) {
-  // TODO: add cache mechanism
+  const cachedFilename = path.join(os.tmpdir(), `geo-dvf-api-${sanitize(url)}`);
+
+  if (await fileExists(cachedFilename)) {
+    return fs
+      .createReadStream(cachedFilename)
+      .pipe(createGunzip())
+      .pipe(parse({ columns: true }));
+  }
+
+  const cacheStream = fs.createWriteStream(cachedFilename);
+
   const response = await fetch(url);
   if (!response.body) throw new Error("body not defined");
+
+  response.body.pipe(cacheStream).on("end", () => cacheStream.destroy());
+
   return response.body.pipe(createGunzip()).pipe(parse({ columns: true }));
 }
 
