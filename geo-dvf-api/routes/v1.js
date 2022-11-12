@@ -30,8 +30,8 @@ module.exports = async (fastify, opts) => {
     // @ts-ignore
     const zipCode = request.body?.zipCode;
 
-    const [d2017] = await Promise.all([2017].map((year) => getDvfStats(year, zipCode)));
+    const [d2017, d2018, d2019] = await Promise.all([2017, 2018, 2019].map((year) => getDvfStats(year, zipCode)));
 
-    return { 2017: d2017 };
+    return { 2017: d2017, 2018: d2018, 2019: d2019 };
   });
 };

@@ -23,13 +23,10 @@ function fileExists(filepath) {
 }
 
 async function parseCsvGzFromUrl(url) {
-  const cachedFilename = path.join(os.tmpdir(), `geo-dvf-api-${sanitize(url)}`);
+  const cachedFilename = path.join(os.tmpdir(), `geo-dvf-api-${sanitize(url)}.csv`);
 
   if (await fileExists(cachedFilename)) {
-    return fs
-      .createReadStream(cachedFilename)
-      .pipe(createGunzip())
-      .pipe(parse({ columns: true }));
+    return fs.createReadStream(cachedFilename).pipe(parse({ columns: true }));
   }
 
   const cacheStream = fs.createWriteStream(cachedFilename);
@@ -37,7 +34,10 @@ async function parseCsvGzFromUrl(url) {
   const response = await fetch(url);
   if (!response.body) throw new Error("body not defined");
 
-  response.body.pipe(cacheStream).on("end", () => cacheStream.destroy());
+  response.body
+    .pipe(createGunzip())
+    .pipe(cacheStream)
+    .on("end", () => cacheStream.destroy());
 
   return response.body.pipe(createGunzip()).pipe(parse({ columns: true }));
 }
