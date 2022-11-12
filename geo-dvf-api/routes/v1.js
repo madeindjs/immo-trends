@@ -1,5 +1,5 @@
 "use strict";
-const { getData } = require("../services/index");
+const { getDvfStats } = require("../services/index");
 
 /**
  * @param {import('fastify').FastifyInstance} fastify
@@ -30,9 +30,8 @@ module.exports = async (fastify, opts) => {
     // @ts-ignore
     const zipCode = request.body?.zipCode;
 
-    const [d2017] = await Promise.all([2017].map((year) => getData(year, zipCode)));
+    const [d2017] = await Promise.all([2017].map((year) => getDvfStats(year, zipCode)));
 
-    // const a = await getData(2017, zipCode);
     return { 2017: d2017 };
   });
 };
