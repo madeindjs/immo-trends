@@ -1,7 +1,6 @@
 import { useEffect, useState } from "preact/hooks";
 import { LineChart } from "./components/line-chart";
 import { SearchForm } from "./components/search-form";
-import { downloadCsv } from "./services/download-csv";
 
 export function App() {
   const [zipCode, setZipCode] = useState("01002");
@@ -11,9 +10,15 @@ export function App() {
   const years = [2017, 2018];
 
   useEffect(() => {
-    for (const year of years) {
-      downloadCsv(zipCode, year).then((result) => setData({ ...data, [String(year)]: result }));
-    }
+    fetch(`/api/v1/stats`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ zipCode }),
+    }).then((res) => {
+      console.log(res);
+    });
   }, [zipCode]);
 
   const sellByYearsLabels = [...Object.keys(data), "2018"];

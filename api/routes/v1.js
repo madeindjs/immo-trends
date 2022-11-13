@@ -26,7 +26,7 @@ module.exports = async (fastify, opts) => {
    * curl -X POST -d '{"zipCode": "69330"}' -H 'content-type: application/json' localhost:3000/v1/stats
    * ~~~
    */
-  fastify.post("/v1/stats", statsOpts, async (request, reply) => {
+  fastify.post("/api/v1/stats", statsOpts, async (request, reply) => {
     // @ts-ignore
     const zipCode = request.body?.zipCode;
 

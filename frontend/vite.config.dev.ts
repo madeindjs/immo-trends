@@ -8,7 +8,11 @@ export default defineConfig({
       ignored: ["public", "*.csv"],
     },
   },
-  build: {},
+  build: {
+    minify: false,
+    sourcemap: true,
+    watch: {},
+  },
   optimizeDeps: {
     exclude: ["*.csv"],
   },

@@ -1,4 +1,4 @@
-import { LineChart as CTLineChart } from "chartist";
+import * as chartist from "chartist";
 import "chartist/dist/index.css";
 import { FunctionComponent } from "preact";
 
@@ -16,7 +16,8 @@ export const LineChart: FunctionComponent<Props> = ({ title, labels, data }) => 
   const initializeChart = (element: HTMLElement | null) => {
     if (!element) return;
 
-    new CTLineChart(
+    // @ts-ignore
+    new chartist.LineChart(
       element,
       {
         labels: labels,
