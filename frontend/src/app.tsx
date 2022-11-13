@@ -15,11 +15,14 @@ interface YearStat {
 export function App() {
   const [zipCode, setZipCode] = useState("69740");
 
-  const [data, setData] = useState<Record<string, YearStat | undefined>>({});
+  const years = ["2017", "2018", "2019", "2020", "2021", "2022"];
 
-  const years = [2017, 2018, 2019, 2020, 2021, 2022];
+  const dataByYear = years.reduce<Record<string, [YearStat | undefined, (d: YearStat) => void]>>((acc, year) => {
+    acc[year] = useState<YearStat>();
+    return acc;
+  }, {});
 
-  const fetchYear = (year: number) =>
+  const fetchYear = (year: string) =>
     fetch(`/api/v1/stats`, {
       method: "POST",
       headers: {
@@ -28,18 +31,15 @@ export function App() {
       body: JSON.stringify({ zipCode, year }),
     })
       .then((res) => res.json())
-      .then((res) => setData({ ...data, [String(year)]: res }));
+      .then((res) => dataByYear[year][1](res));
 
   useEffect(() => {
     years.map(fetchYear);
   }, [zipCode]);
 
-  console.log(data);
-
   const sellByYearsLabels = years.map(String);
   const sellByYearsSeries = Object.values(DvfType).map((type) => {
-    const rows = years.map((year) => data[year]?.count[type] ?? 0);
-
+    const rows = years.map((year) => dataByYear[year][0]?.count[type] ?? 0);
     return { name: type, data: rows };
   });
 
