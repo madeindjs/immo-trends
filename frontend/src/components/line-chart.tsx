@@ -5,14 +5,10 @@ import { FunctionComponent } from "preact";
 interface Props {
   title: string;
   labels: string[];
-  data: number[];
+  series: { name: string; data: number[] }[];
 }
 
-export const LineChart: FunctionComponent<Props> = ({ title, labels, data }) => {
-  console.log(labels, data);
-
-  // if (labels)
-
+export const LineChart: FunctionComponent<Props> = ({ title, labels, series }) => {
   const initializeChart = (element: HTMLElement | null) => {
     if (!element) return;
 
@@ -21,16 +17,7 @@ export const LineChart: FunctionComponent<Props> = ({ title, labels, data }) => 
       element,
       {
         labels: labels,
-        series: [
-          {
-            name: "series-1",
-            data,
-          },
-          {
-            name: "series-2",
-            data: data.map((i) => i * (0.5 + Math.random())),
-          },
-        ],
+        series,
       },
       {
         showArea: true,

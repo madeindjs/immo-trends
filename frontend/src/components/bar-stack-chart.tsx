@@ -5,7 +5,7 @@ import { FunctionComponent } from "preact";
 interface Props {
   title: string;
   labels: string[];
-  series: number[];
+  series: { name: string; data: number[] }[];
 }
 
 export const BarStackChart: FunctionComponent<Props> = ({ title, labels, series }) => {

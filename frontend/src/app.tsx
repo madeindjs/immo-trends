@@ -1,5 +1,6 @@
 import { useEffect, useState } from "preact/hooks";
 import { BarStackChart } from "./components/bar-stack-chart";
+import { LineChart } from "./components/line-chart";
 import { SearchForm } from "./components/search-form";
 
 enum DvfType {
@@ -10,6 +11,7 @@ enum DvfType {
 }
 interface YearStat {
   count: Record<DvfType, number>;
+  pricePerM2Median: Record<DvfType, number>;
 }
 
 export function App() {
@@ -37,11 +39,17 @@ export function App() {
     years.map(fetchYear);
   }, [zipCode]);
 
-  const sellByYearsLabels = years.map(String);
   const sellByYearsSeries = Object.values(DvfType).map((type) => {
     const rows = years.map((year) => dataByYear[year][0]?.count[type] ?? 0);
     return { name: type, data: rows };
   });
+
+  const pricePerM2ByYearsSeries = Object.values(DvfType)
+    .filter((type) => type !== DvfType.Unknown)
+    .map((type) => {
+      const rows = years.map((year) => dataByYear[year][0]?.pricePerM2Median[type] ?? 0);
+      return { name: type, data: rows };
+    });
 
   return (
     <main class="container-fluid">
@@ -60,7 +68,8 @@ export function App() {
         </ul>
       </nav>
       <SearchForm zipCode={zipCode} onZipCodeChange={setZipCode} />
-      <BarStackChart title="Nombre de mutation par ans" labels={sellByYearsLabels} series={sellByYearsSeries} />
+      <BarStackChart title="Nombre de mutation par ans" labels={years} series={sellByYearsSeries} />
+      <LineChart title="Prix au mètre carré par ans" labels={years} series={pricePerM2ByYearsSeries} />
     </main>
   );
 }
