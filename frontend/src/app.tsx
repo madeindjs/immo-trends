@@ -1,28 +1,47 @@
 import { useEffect, useState } from "preact/hooks";
-import { LineChart } from "./components/line-chart";
+import { BarStackChart } from "./components/bar-stack-chart";
 import { SearchForm } from "./components/search-form";
 
+enum DvfType {
+  "Maison" = "Maison",
+  "Dépendance" = "Dépendance",
+  "Appartement" = "Appartement",
+  "Unknown" = "",
+}
+interface YearStat {
+  count: Record<DvfType, number>;
+}
+
 export function App() {
-  const [zipCode, setZipCode] = useState("01002");
+  const [zipCode, setZipCode] = useState("69740");
 
-  const [data, setData] = useState<Record<string, unknown[]>>({});
+  const [data, setData] = useState<Record<string, YearStat | undefined>>({});
 
-  const years = [2017, 2018];
+  const years = [2017, 2018, 2019, 2020, 2021, 2022];
 
-  useEffect(() => {
+  const fetchYear = (year: number) =>
     fetch(`/api/v1/stats`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ zipCode }),
-    }).then((res) => {
-      console.log(res);
-    });
+      body: JSON.stringify({ zipCode, year }),
+    })
+      .then((res) => res.json())
+      .then((res) => setData({ ...data, [String(year)]: res }));
+
+  useEffect(() => {
+    years.map(fetchYear);
   }, [zipCode]);
 
-  const sellByYearsLabels = [...Object.keys(data), "2018"];
-  const sellByYearsData = [...Object.values(data).map((rows) => rows.length), 5];
+  console.log(data);
+
+  const sellByYearsLabels = years.map(String);
+  const sellByYearsSeries = Object.values(DvfType).map((type) => {
+    const rows = years.map((year) => data[year]?.count[type] ?? 0);
+
+    return { name: type, data: rows };
+  });
 
   return (
     <main class="container-fluid">
@@ -41,7 +60,7 @@ export function App() {
         </ul>
       </nav>
       <SearchForm zipCode={zipCode} onZipCodeChange={setZipCode} />
-      <LineChart title="Nombre de mutation par ans" labels={sellByYearsLabels} data={sellByYearsData} />
+      <BarStackChart title="Nombre de mutation par ans" labels={sellByYearsLabels} series={sellByYearsSeries} />
     </main>
   );
 }
