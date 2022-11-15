@@ -6,13 +6,14 @@ import { YearLoader } from "./components/year-loader";
 import { DvfType, YearStat } from "./models";
 import { readableDate } from "./utils/date";
 import { fetchYearStat } from "./utils/fetch-year-stats";
+import { changeUrlQueryParam, getUrlQueryParam } from "./utils/url";
 
 const LineChart = lazy(() => import("./components/line-chart").then((m) => m.LineChart));
 const BarStackChart = lazy(() => import("./components/bar-stack-chart").then((m) => m.BarStackChart));
 
 export function App() {
   const [isLoading, setIsLoading] = useState(false);
-  const [zipCode, setZipCode] = useState("");
+  const [zipCode, setZipCode] = useState(getUrlQueryParam("zipCode"));
 
   const years = ["2017", "2018", "2019", "2020", "2021", "2022"];
 
@@ -32,6 +33,8 @@ export function App() {
 
   useEffect(() => {
     if (!zipCode) return;
+
+    changeUrlQueryParam({ zipCode });
 
     clearDataByYear();
 
