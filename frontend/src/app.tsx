@@ -1,9 +1,11 @@
+import { lazy, Suspense } from "preact/compat";
 import { useEffect, useState } from "preact/hooks";
-import { BarStackChart } from "./components/bar-stack-chart";
-import { LineChart } from "./components/line-chart";
 import { SearchForm } from "./components/search-form";
 import { DvfType, YearStat } from "./models";
 import { readableDate } from "./utils/date";
+
+const LineChart = lazy(() => import("./components/line-chart").then((m) => m.LineChart));
+const BarStackChart = lazy(() => import("./components/bar-stack-chart").then((m) => m.BarStackChart));
 
 export function App() {
   const [isLoading, setIsLoading] = useState(false);
@@ -75,8 +77,12 @@ export function App() {
           <li>{town}</li>
         ))}
       </ul>
-      <LineChart title="Prix au mètre carré médian par an" labels={years} series={pricePerM2ByYearsSeries} />
-      <BarStackChart title="Nombre de mutation par an" labels={years} series={sellByYearsSeries} />
+      <Suspense fallback={<div aria-busy="true">loading...</div>}>
+        <LineChart title="Prix au mètre carré médian par an" labels={years} series={pricePerM2ByYearsSeries} />
+      </Suspense>
+      <Suspense fallback={<div aria-busy="true">loading...</div>}>
+        <BarStackChart title="Nombre de mutation par an" labels={years} series={sellByYearsSeries} />
+      </Suspense>
     </main>
   );
 }
