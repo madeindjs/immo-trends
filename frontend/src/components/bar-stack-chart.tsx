@@ -22,6 +22,7 @@ export const BarStackChart: FunctionComponent<Props> = ({ title, labels, series 
         labels: {
           format: (v) => Math.floor(v),
         },
+        hide: ["Dépendance"],
       },
     });
   };
