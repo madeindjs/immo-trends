@@ -1,35 +1,40 @@
 import { lazy, Suspense } from "preact/compat";
 import { useEffect, useState } from "preact/hooks";
+// import { LineChart } from "./components/line-chart";
 import { SearchForm } from "./components/search-form";
+import { YearLoader } from "./components/year-loader";
 import { DvfType, YearStat } from "./models";
 import { readableDate } from "./utils/date";
+import { fetchYearStat } from "./utils/fetch-year-stats";
 
 const LineChart = lazy(() => import("./components/line-chart").then((m) => m.LineChart));
 const BarStackChart = lazy(() => import("./components/bar-stack-chart").then((m) => m.BarStackChart));
 
 export function App() {
   const [isLoading, setIsLoading] = useState(false);
-  const [zipCode, setZipCode] = useState("69740");
+  const [zipCode, setZipCode] = useState("");
 
   const years = ["2017", "2018", "2019", "2020", "2021", "2022"];
 
-  const dataByYear = years.reduce<Record<string, [YearStat | undefined, (d: YearStat) => void]>>((acc, year) => {
-    acc[year] = useState<YearStat>();
-    return acc;
-  }, {});
+  const dataByYear = years.reduce<Record<string, [YearStat | undefined, (d: YearStat | undefined) => void]>>(
+    (acc, year) => {
+      acc[year] = useState<YearStat>();
+      return acc;
+    },
+    {}
+  );
 
-  const fetchYear = (year: string) =>
-    fetch(`/api/v1/stats`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ zipCode, year }),
-    })
-      .then((res) => res.json())
-      .then((res) => dataByYear[year][1](res));
+  const clearDataByYear = () => years.forEach((year) => dataByYear[year][1](undefined));
+
+  const isYearReady = (year: string) => dataByYear[year][0] !== undefined;
+
+  const fetchYear = (year: string) => fetchYearStat(year, zipCode).then((res) => dataByYear[year][1](res));
 
   useEffect(() => {
+    if (!zipCode) return;
+
+    clearDataByYear();
+
     setIsLoading(true);
     Promise.all(years.map(fetchYear)).finally(() => setIsLoading(false));
   }, [zipCode]);
@@ -51,6 +56,8 @@ export function App() {
 
   const towns = Array.from(new Set(years.flatMap((year) => dataByYear[year][0]?.towns).filter(Boolean)));
 
+  const currentProgress = () => years.map(isYearReady).filter(Boolean).length;
+
   return (
     <main class="container-fluid">
       <nav>
@@ -68,21 +75,42 @@ export function App() {
         </ul>
       </nav>
       <SearchForm zipCode={zipCode} onZipCodeChange={setZipCode} />
-      <p>
-        Les données pour ce truc vont de {readableDate(firstMutationDate)} à {readableDate(lastMutationDate)} pour les
-        villes suivantes
-      </p>
-      <ul>
-        {towns.map((town) => (
-          <li>{town}</li>
-        ))}
-      </ul>
-      <Suspense fallback={<div aria-busy="true">loading...</div>}>
-        <LineChart title="Prix au mètre carré médian par an" labels={years} series={pricePerM2ByYearsSeries} />
-      </Suspense>
-      <Suspense fallback={<div aria-busy="true">loading...</div>}>
-        <BarStackChart title="Nombre de mutation par an" labels={years} series={sellByYearsSeries} />
-      </Suspense>
+
+      {!zipCode && <p>Remplissez le formulaire</p>}
+
+      {zipCode && isLoading && (
+        <>
+          <p aria-busy="true">Nous calculons les données...</p>
+          <progress value={currentProgress()} max={years.length}></progress>
+          <ul>
+            {years.map((year) => (
+              <li>
+                <YearLoader year={year} ready={isYearReady(year)} />
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {/* {zipCode && !isLoading && ( */}
+      <>
+        <p>
+          Les données pour ce truc vont de {readableDate(firstMutationDate)} à {readableDate(lastMutationDate)} pour les
+          villes suivantes
+        </p>
+        <ul>
+          {towns.map((town) => (
+            <li>{town}</li>
+          ))}
+        </ul>
+        <Suspense fallback={<div aria-busy="true">loading...</div>}>
+          <LineChart title="Prix au mètre carré médian par an" labels={years} series={pricePerM2ByYearsSeries} />
+        </Suspense>
+        <Suspense fallback={<div aria-busy="true">loading...</div>}>
+          <BarStackChart title="Nombre de mutation par an" labels={years} series={sellByYearsSeries} />
+        </Suspense>
+      </>
+      {/* )} */}
     </main>
   );
 }

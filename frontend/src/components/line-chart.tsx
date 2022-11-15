@@ -12,6 +12,8 @@ export const LineChart: FunctionComponent<Props> = ({ title, labels, series }) =
   const initializeChart = (element: HTMLElement | null) => {
     if (!element) return;
 
+    console.log(series);
+
     bb.generate({
       bindto: element,
       data: {
