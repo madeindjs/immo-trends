@@ -2,6 +2,7 @@ import { useEffect, useState } from "preact/hooks";
 import { BarStackChart } from "./components/bar-stack-chart";
 import { LineChart } from "./components/line-chart";
 import { SearchForm } from "./components/search-form";
+import { readableDate } from "./utils/date";
 
 enum DvfType {
   "Maison" = "Maison",
@@ -12,9 +13,13 @@ enum DvfType {
 interface YearStat {
   count: Record<DvfType, number>;
   pricePerM2Median: Record<DvfType, number>;
+  towns: string[];
+  firstMutationDate: string;
+  lastMutationDate: string;
 }
 
 export function App() {
+  const [isLoading, setIsLoading] = useState(false);
   const [zipCode, setZipCode] = useState("69740");
 
   const years = ["2017", "2018", "2019", "2020", "2021", "2022"];
@@ -36,7 +41,8 @@ export function App() {
       .then((res) => dataByYear[year][1](res));
 
   useEffect(() => {
-    years.map(fetchYear);
+    setIsLoading(true);
+    Promise.all(years.map(fetchYear)).finally(() => setIsLoading(false));
   }, [zipCode]);
 
   const sellByYearsSeries = Object.values(DvfType).map((type) => {
@@ -50,6 +56,11 @@ export function App() {
       const rows = years.map((year) => dataByYear[year][0]?.pricePerM2Median[type] ?? 0);
       return { name: type, data: rows };
     });
+
+  const firstMutationDate = dataByYear[years[0]][0]?.firstMutationDate;
+  const lastMutationDate = dataByYear[years[years.length - 1]][0]?.lastMutationDate;
+
+  const towns = Array.from(new Set(years.flatMap((year) => dataByYear[year][0]?.towns).filter(Boolean)));
 
   return (
     <main class="container-fluid">
@@ -68,8 +79,17 @@ export function App() {
         </ul>
       </nav>
       <SearchForm zipCode={zipCode} onZipCodeChange={setZipCode} />
-      <BarStackChart title="Nombre de mutation par ans" labels={years} series={sellByYearsSeries} />
-      <LineChart title="Prix au mètre carré par ans" labels={years} series={pricePerM2ByYearsSeries} />
+      <p>
+        Les données pour ce truc vont de {readableDate(firstMutationDate)} à {readableDate(lastMutationDate)} pour les
+        villes suivantes
+      </p>
+      <ul>
+        {towns.map((town) => (
+          <li>{town}</li>
+        ))}
+      </ul>
+      <LineChart title="Prix au mètre carré médian par an" labels={years} series={pricePerM2ByYearsSeries} />
+      <BarStackChart title="Nombre de mutation par an" labels={years} series={sellByYearsSeries} />
     </main>
   );
 }

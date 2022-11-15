@@ -12,8 +12,6 @@ export const BarStackChart: FunctionComponent<Props> = ({ title, labels, series 
   const initializeChart = (element: HTMLElement | null) => {
     if (!element) return;
 
-    console.log(series, labels);
-
     bb.generate({
       bindto: element,
       data: {
@@ -21,6 +19,9 @@ export const BarStackChart: FunctionComponent<Props> = ({ title, labels, series 
         columns: [["x", ...labels], ...series.filter((s) => s.name).map((s) => [s.name, ...s.data])],
         type: bar(),
         groups: [series.filter((s) => s.name).map((s) => s.name)],
+        labels: {
+          format: (v) => Math.floor(v),
+        },
       },
     });
   };

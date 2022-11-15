@@ -18,7 +18,9 @@ export const LineChart: FunctionComponent<Props> = ({ title, labels, series }) =
         x: "x",
         columns: [["x", ...labels], ...series.map((s) => [s.name, ...s.data])],
         type: line(),
-        labels: {},
+        labels: {
+          format: (v) => Math.floor(v),
+        },
       },
     });
   };
