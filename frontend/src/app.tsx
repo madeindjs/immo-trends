@@ -2,21 +2,8 @@ import { useEffect, useState } from "preact/hooks";
 import { BarStackChart } from "./components/bar-stack-chart";
 import { LineChart } from "./components/line-chart";
 import { SearchForm } from "./components/search-form";
+import { DvfType, YearStat } from "./models";
 import { readableDate } from "./utils/date";
-
-enum DvfType {
-  "Maison" = "Maison",
-  "Dépendance" = "Dépendance",
-  "Appartement" = "Appartement",
-  "Unknown" = "",
-}
-interface YearStat {
-  count: Record<DvfType, number>;
-  pricePerM2Median: Record<DvfType, number>;
-  towns: string[];
-  firstMutationDate: string;
-  lastMutationDate: string;
-}
 
 export function App() {
   const [isLoading, setIsLoading] = useState(false);
