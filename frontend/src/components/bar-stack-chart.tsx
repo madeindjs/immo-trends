@@ -1,5 +1,5 @@
-import * as chartist from "chartist";
-import "chartist/dist/index.css";
+import bb, { bar } from "billboard.js";
+import "billboard.js/dist/billboard.css";
 import { FunctionComponent } from "preact";
 
 interface Props {
@@ -9,38 +9,20 @@ interface Props {
 }
 
 export const BarStackChart: FunctionComponent<Props> = ({ title, labels, series }) => {
-  // if (labels)
-
   const initializeChart = (element: HTMLElement | null) => {
     if (!element) return;
 
-    console.log(series);
+    console.log(series, labels);
 
-    // @ts-ignore
-    new chartist.BarChart(
-      element,
-      {
-        labels: labels,
-        series: series,
+    bb.generate({
+      bindto: element,
+      data: {
+        x: "x",
+        columns: [["x", ...labels], ...series.filter((s) => s.name).map((s) => [s.name, ...s.data])],
+        type: bar(),
+        groups: [series.filter((s) => s.name).map((s) => s.name)],
       },
-      {
-        stackBars: true,
-        showArea: true,
-        showPoint: false,
-        // series
-        axisX: {
-          showGrid: false,
-          //   // type: Chartist.FixedScaleAxis,
-          //   // divisor: 100,
-          //   // labelInterpolationFnc: function(value) {
-          //   //   return moment(value).format('MMM D');
-          //   // }
-        },
-        axisY: {
-          showGrid: false,
-        },
-      }
-    );
+    });
   };
 
   return (

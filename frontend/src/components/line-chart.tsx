@@ -1,5 +1,5 @@
-import * as chartist from "chartist";
-import "chartist/dist/index.css";
+import bb, { line } from "billboard.js";
+import "billboard.js/dist/billboard.css";
 import { FunctionComponent } from "preact";
 
 interface Props {
@@ -12,30 +12,15 @@ export const LineChart: FunctionComponent<Props> = ({ title, labels, series }) =
   const initializeChart = (element: HTMLElement | null) => {
     if (!element) return;
 
-    // @ts-ignore
-    new chartist.LineChart(
-      element,
-      {
-        labels: labels,
-        series,
+    bb.generate({
+      bindto: element,
+      data: {
+        x: "x",
+        columns: [["x", ...labels], ...series.map((s) => [s.name, ...s.data])],
+        type: line(),
+        labels: {},
       },
-      {
-        showArea: true,
-        showPoint: false,
-        // series
-        axisX: {
-          showGrid: false,
-          //   // type: Chartist.FixedScaleAxis,
-          //   // divisor: 100,
-          //   // labelInterpolationFnc: function(value) {
-          //   //   return moment(value).format('MMM D');
-          //   // }
-        },
-        axisY: {
-          showGrid: false,
-        },
-      }
-    );
+    });
   };
 
   return (
