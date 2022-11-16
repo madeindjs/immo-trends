@@ -18,7 +18,7 @@ async function getZipCodeStream() {
   const stream = await parseCsvFromUrl("https://www.data.gouv.fr/fr/datasets/r/c3ba421c-6745-4fab-92ab-1716b16409c9", {
     delimiter: ";",
     from: 0,
-    to: 1,
+    to: 5,
   });
 
   return stream.pipe(new ZipCodeFormater());
