@@ -14,11 +14,16 @@ class ZipCodeFormater extends Transform {
   }
 }
 
-async function getZipCodeStream() {
+/**
+ *
+ * @param {number | undefined} limit
+ * @returns
+ */
+async function getZipCodeStream(limit = undefined) {
   const stream = await parseCsvFromUrl("https://www.data.gouv.fr/fr/datasets/r/c3ba421c-6745-4fab-92ab-1716b16409c9", {
     delimiter: ";",
     from: 0,
-    to: 5,
+    to: limit,
   });
 
   return stream.pipe(new ZipCodeFormater());

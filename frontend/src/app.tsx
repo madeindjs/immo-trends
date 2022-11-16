@@ -14,6 +14,7 @@ const BarStackChart = lazy(() => import("./components/bar-stack-chart").then((m)
 export function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [zipCode, setZipCode] = useState(getUrlQueryParam("zipCode"));
+  const [town, setTown] = useState(getUrlQueryParam("towns"));
 
   const years = ["2017", "2018", "2019", "2020", "2021", "2022"];
 
@@ -29,18 +30,16 @@ export function App() {
 
   const isYearReady = (year: string) => dataByYear[year][0] !== undefined;
 
-  const fetchYear = (year: string) => fetchYearStat(year, zipCode).then((res) => dataByYear[year][1](res));
+  const fetchYear = (year: string) => fetchYearStat(year, zipCode, town).then((res) => dataByYear[year][1](res));
 
   useEffect(() => {
     if (!zipCode) return;
 
-    changeUrlQueryParam({ zipCode });
-
+    changeUrlQueryParam({ zipCode, town });
     clearDataByYear();
-
     setIsLoading(true);
     Promise.all(years.map(fetchYear)).finally(() => setIsLoading(false));
-  }, [zipCode]);
+  }, [zipCode, town]);
 
   const sellByYearsSeries = Object.values(DvfType).map((type) => {
     const rows = years.map((year) => dataByYear[year][0]?.count[type] ?? 0);
@@ -57,7 +56,7 @@ export function App() {
   const firstMutationDate = dataByYear[years[0]][0]?.firstMutationDate;
   const lastMutationDate = dataByYear[years[years.length - 1]][0]?.lastMutationDate;
 
-  const towns = Array.from(new Set(years.flatMap((year) => dataByYear[year][0]?.towns).filter(Boolean)));
+  const towns = Array.from(new Set(years.flatMap((year) => dataByYear[year][0]?.towns).filter(Boolean))) as string[];
 
   const currentProgress = () => years.map(isYearReady).filter(Boolean).length;
 
@@ -77,7 +76,7 @@ export function App() {
           </li>
         </ul>
       </nav>
-      <SearchForm zipCode={zipCode} onZipCodeChange={setZipCode} />
+      <SearchForm zipCode={zipCode} onZipCodeChange={setZipCode} towns={towns} town={town} onTownChange={setTown} />
 
       {!zipCode && <p>Remplissez le formulaire</p>}
 

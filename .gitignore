@@ -1,6 +1,5 @@
 node_modules
 data
 computes
-graphs
 *.sqlite
 *.sqlite3

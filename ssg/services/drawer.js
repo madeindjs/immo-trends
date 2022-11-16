@@ -5,7 +5,7 @@ const fs = require("fs");
 const width = 600; //px
 const height = 600; //px
 const backgroundColour = "white"; // Uses https://www.w3schools.com/tags/canvas_fillstyle.asp
-const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, type: "svg" });
+const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, backgroundColour, type: "svg" });
 
 const colors = ["#1abc9c", "#2980b9", "#c0392b", "#f39c12", "#9b59b6", "#2c3e50", "#7f8c8d", "#f1c40f"];
 

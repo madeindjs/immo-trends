@@ -4,7 +4,8 @@ const { getZipCodeStream } = require("./zip-code");
 const { getDvfStats } = require("./dvf");
 const { drawImage } = require("./drawer");
 const { years } = require("./constants");
-const { getConfiguration } = require("./graphs/count-by-year");
+const { getConfiguration: getCountByYearConfiguration } = require("./graphs/count-by-year");
+const { getConfiguration: getMedianByYearConfiguration } = require("./graphs/median-price-by-surface");
 
 class ZipCodeStreamFilter extends Transform {
   constructor() {
@@ -36,13 +37,21 @@ class ZipCodeStreamFilter extends Transform {
  * @param {{zipCode: string, data: Record<string, import("./dvf").DvfStats>}} stats
  */
 async function rowHandler({ data, zipCode }) {
-  await drawImage(getConfiguration({ data, zipCode }), `${zipCode}-count-by-year`);
+  await drawImage(getCountByYearConfiguration({ data, zipCode }), `${zipCode}-count`);
+  await drawImage(getMedianByYearConfiguration({ data, zipCode }), `${zipCode}-median-price-by-surface`);
 }
 
 async function main() {
-  const zipCodeStream = await getZipCodeStream();
+  let i = 0;
+  let limit = 30;
 
-  zipCodeStream.pipe(new ZipCodeStreamFilter()).on("data", (stats) => rowHandler(stats));
+  const zipCodeStream = await getZipCodeStream(limit);
+
+  zipCodeStream.pipe(new ZipCodeStreamFilter()).on("data", (stats) => {
+    i++;
+    console.log(`${i}/${limit}`);
+    rowHandler(stats);
+  });
 }
 
 main().catch(console.error);
