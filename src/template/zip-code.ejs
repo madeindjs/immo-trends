@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-  <%- include('_head', {title: `${zipCode} | DVF viewer` }); %>
+  <%- include('_head', {title: `${zipCode}: ${name} | DVF viewer` }); %>
   <body>
 
     <main class="container">
       <%- include('_nav'); %>
-      <h1>Données pour le code postal <%= zipCode %></h1>
+      <h1><%= zipCode %>: <%= name %></h1>
 
       <div class="grid">
         <article>

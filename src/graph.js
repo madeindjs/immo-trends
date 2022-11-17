@@ -16,11 +16,11 @@ function getCountDataSet(stats, key) {
 }
 
 /**
- * @param {{zipCode: string, data: Record<string, import("./dvf").DvfStats>}} stats
+ * @param {Record<string, import("./dvf").DvfStats>} data
  * @param {string} key
  * @return {import("chart.js").ChartConfiguration}
  */
-function getConfiguration({ data, zipCode }, key) {
+function getConfiguration( data, key) {
   return {
     type: "line",
     data: {
@@ -46,5 +46,6 @@ function convertConfigurationToArray(configuration) {
 }
 
 module.exports = { getConfiguration, convertConfigurationToArray };
+
 
 

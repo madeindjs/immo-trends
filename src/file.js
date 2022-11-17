@@ -35,6 +35,10 @@ async function writeZipCodeFile(zipCode, name, content) {
   await fsp.writeFile(path.join(__dirname, "..", "dist", zipCode, name), content);
 }
 
+async function writeInDist(name, content) {
+  await fsp.writeFile(path.join(__dirname, "..", "dist", name), content);
+}
+
 /**
  * @param {string} name
  * @return {string}
@@ -43,7 +47,11 @@ function getCacheFilePath(name) {
   return path.join(__dirname, "..", ".cache", sanitize(name));
 }
 
-module.exports = { fileExists, getCacheFilePath, writeZipCodeFile };
+module.exports = { fileExists, getCacheFilePath, writeZipCodeFile, writeInDist };
+
+
+
+
 
 
 
