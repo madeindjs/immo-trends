@@ -8,7 +8,10 @@
   },
   "scripts": {
     "build": "node ./src/main.js",
-    "clear": "rm -r dist/*"
+    "serve": "http-server dist",
+    "dev": "nodemon",
+    "clear:cache": "rm -r .cache/*",
+    "clear:dist": "rm -r dist/*"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +27,8 @@
     "sanitize-filename": "^1.6.3"
   },
   "devDependencies": {
-    "@types/csv-parse": "^1.2.2"
+    "@types/csv-parse": "^1.2.2",
+    "http-server": "^14.1.1",
+    "nodemon": "^2.0.20"
   }
 }

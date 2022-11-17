@@ -1,20 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
-  <%- include('_head', {title: `DVF viewer` }); %>
+<html lang="fr">
+  <%- include('_head', {title: appName }); %>
   <body>
     <main class="container">
       <%- include('_nav'); %>
-      <h1>DVF Viewer</h1>
+      <h1 style="display: none"><%= appName %></h1>
 
-      <label for="zipCode">
-        Code postal
-        <input type="number" id="zipCode" />
-        <datalist id="zipCodes">
-          <% zipCodes.forEach(function ({zipCode}) { %>
-          <option value="<%= zipCode %>"></option><% }); %>
-        </datalist>
-        <!-- TODO: redirect to the page from input -->
-      </label>
+      <h2>Code postaux</h2>
+
+      <ul>
+        <% zipCodes.forEach(function ({zipCode, name}) { %>
+        <li><a href="<%= zipCode %>"><%= name %> (<%= zipCode %>)</a></li>
+        <% }); %>
+      </ul>
+
+      <h2>Foire aux questions</h2>
+
+      <%- include('_about'); %>
     </main>
   </body>
 </html>
