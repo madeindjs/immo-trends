@@ -37,13 +37,13 @@ class ZipCodeStreamFilter extends Transform {
  * @param {{zipCode: string, data: Record<string, import("./dvf").DvfStats>}} stats
  */
 async function rowHandler({ data, zipCode }) {
-  await drawImage(getCountByYearConfiguration({ data, zipCode }), `${zipCode}-count`);
-  await drawImage(getMedianByYearConfiguration({ data, zipCode }), `${zipCode}-median-price-by-surface`);
+  await drawImage(getCountByYearConfiguration({ data, zipCode }), zipCode, `count`);
+  await drawImage(getMedianByYearConfiguration({ data, zipCode }), zipCode, `median-price-by-surface`);
 }
 
 async function main() {
   let i = 0;
-  let limit = 30;
+  let limit = 1;
 
   const zipCodeStream = await getZipCodeStream(limit);
 
@@ -55,3 +55,6 @@ async function main() {
 }
 
 main().catch(console.error);
+
+
+

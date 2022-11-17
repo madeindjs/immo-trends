@@ -1,4 +1,6 @@
 const fs = require("fs");
+const path = require("path");
+const sanitize = require("sanitize-filename");
 
 function fileExists(filepath) {
   return new Promise((resolve, reject) => {
@@ -14,4 +16,16 @@ function fileExists(filepath) {
   });
 }
 
-module.exports = { fileExists };
+/**
+ * @param {string} name
+ * @return {string}
+ */
+function getCacheFilePath(name) {
+  return path.join(__dirname, "..", ".cache", sanitize(name));
+}
+
+module.exports = { fileExists, getCacheFilePath };
+
+
+
+

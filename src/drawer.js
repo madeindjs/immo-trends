@@ -1,6 +1,6 @@
 const { ChartJSNodeCanvas } = require("chartjs-node-canvas");
 const path = require("path");
-const fs = require("fs");
+const fs = require("fs/promises");
 
 const width = 600; //px
 const height = 600; //px
@@ -22,9 +22,19 @@ function getColor(index) {
  * @param {import("chart.js").ChartConfiguration} configuration
  * @param {string} name
  */
-async function drawImage(configuration, name) {
+async function drawImage(configuration, folder, name) {
   const image = chartJSNodeCanvas.renderToBufferSync(configuration, "image/svg+xml");
-  fs.writeFileSync(path.join(__dirname, "..", "dist", `${name}.svg`), image);
+
+  fs.mkdir(path.join(__dirname, "..", "dist", folder)).catch((error) => {
+    if (error.code !== "EEXIST") throw error;
+  });
+
+  await fs.writeFile(path.join(__dirname, "..", "dist", folder, `${name}.svg`), image);
 }
 
 module.exports = { getColor, drawImage };
+
+
+
+
+

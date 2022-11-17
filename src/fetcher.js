@@ -1,13 +1,10 @@
 // @ts-ignore
 const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
-const sanitize = require("sanitize-filename");
 const { parse } = require("csv-parse");
 const { createGunzip } = require("zlib");
-const os = require("os");
-const path = require("path");
 const fs = require("fs");
 
-const { fileExists } = require("./file");
+const { fileExists, getCacheFilePath } = require("./file");
 
 /**
  * @param {string} url
@@ -15,7 +12,7 @@ const { fileExists } = require("./file");
  * @returns
  */
 async function parseCsvFromUrl(url, parserOpts = {}) {
-  const cachedFilename = path.join(os.tmpdir(), `geo-dvf-api-${sanitize(url)}.csv`);
+  const cachedFilename = getCacheFilePath(url);
 
   const parser = parse({ columns: true, ...parserOpts });
 
@@ -39,7 +36,7 @@ async function parseCsvFromUrl(url, parserOpts = {}) {
  * @returns
  */
 async function parseCsvGzFromUrl(url, parserOpts = {}) {
-  const cachedFilename = path.join(os.tmpdir(), `geo-dvf-api-${sanitize(url)}.csv`);
+  const cachedFilename = getCacheFilePath(url);
 
   const parser = parse({ columns: true, ...parserOpts });
 
@@ -61,3 +58,6 @@ async function parseCsvGzFromUrl(url, parserOpts = {}) {
 }
 
 module.exports = { parseCsvGzFromUrl, parseCsvFromUrl };
+
+
+
