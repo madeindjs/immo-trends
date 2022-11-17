@@ -58,7 +58,7 @@ async function rowHandler({ data, zipCode, name }) {
 
 async function main() {
   let i = 0;
-  let limit = 1;
+  let limit = undefined;
 
   const zipCodeStream = await getZipCodeStream(limit);
 
