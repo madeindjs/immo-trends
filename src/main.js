@@ -1,12 +1,13 @@
 const { Transform } = require("stream");
+const { stringify } = require("csv-stringify/sync");
 
 const { getZipCodeStream } = require("./zip-code");
 const { getDvfStats } = require("./dvf");
 const { drawImage } = require("./drawer");
 const { years } = require("./constants");
-const { getConfiguration: getCountByYearConfiguration } = require("./graphs/count-by-year");
-const { getConfiguration: getMedianByYearConfiguration } = require("./graphs/median-price-by-surface");
+const { getConfiguration, convertConfigurationToArray } = require("./graph");
 const { renderTemplate } = require("./template/renderer");
+const { writeZipCodeFile } = require("./file");
 
 class ZipCodeStreamFilter extends Transform {
   constructor() {
@@ -38,10 +39,21 @@ class ZipCodeStreamFilter extends Transform {
  * @param {{zipCode: string, data: Record<string, import("./dvf").DvfStats>}} stats
  */
 async function rowHandler({ data, zipCode }) {
-  await drawImage(getCountByYearConfiguration({ data, zipCode }), zipCode, `count`);
-  await drawImage(getMedianByYearConfiguration({ data, zipCode }), zipCode, `median-price-by-surface`);
+  const countConfiguration = getConfiguration({ data, zipCode }, "count");
+  await drawImage(countConfiguration, zipCode, `count`);
+  const countData = convertConfigurationToArray(countConfiguration);
+  await writeZipCodeFile(zipCode, "count.csv", stringify(countData, { columns: ["type", ...years], header: true }));
 
-  await renderTemplate("zip-code.ejs", { zipCode });
+  const pricePerM2Configuration = getConfiguration({ data, zipCode }, "pricePerM2Median");
+  await drawImage(pricePerM2Configuration, zipCode, `median-price-by-surface`);
+  const pricePerM2Data = convertConfigurationToArray(pricePerM2Configuration);
+  await writeZipCodeFile(
+    zipCode,
+    "median-price-by-surface.csv",
+    stringify(pricePerM2Data, { columns: ["type", ...years], header: true })
+  );
+
+  await renderTemplate("zip-code.ejs", { zipCode, pricePerM2Data, countData, years });
 }
 
 async function main() {
@@ -58,6 +70,28 @@ async function main() {
 }
 
 main().catch(console.error);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
