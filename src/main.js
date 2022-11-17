@@ -6,7 +6,7 @@ const { getDvfStats } = require("./dvf");
 const { drawImage } = require("./drawer");
 const { years } = require("./constants");
 const { getConfiguration, convertConfigurationToArray } = require("./graph");
-const { renderTemplate, renderHomeTemplate } = require("./template/renderer");
+const { renderTemplate, renderHomeTemplate, renderDepTemplate } = require("./template/renderer");
 const { writeZipCodeFile } = require("./file");
 
 class ZipCodeStreamFilter extends Transform {
@@ -75,6 +75,15 @@ async function main() {
     })
     .on("end", () => {
       renderHomeTemplate({ zipCodes });
+
+      const deps = new Set(zipCodes.map(({ zipCode }) => zipCode.slice(0, 2)));
+
+      deps.forEach((dep) => {
+        renderDepTemplate(dep, {
+          zipCodes: zipCodes.filter(({ zipCode }) => zipCode.startsWith(dep)),
+          dep,
+        });
+      });
     });
 }
 

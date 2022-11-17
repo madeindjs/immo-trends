@@ -30,9 +30,25 @@ function createFolder(folder) {
  * @param {string | Buffer} content
  */
 async function writeZipCodeFile(zipCode, name, content) {
-  await createFolder(zipCode);
+  const dep = zipCode.slice(0, 2);
 
-  await fsp.writeFile(path.join(__dirname, "..", "dist", zipCode, name), content);
+  await createFolder(dep);
+
+  await createFolder(path.join(dep, zipCode));
+
+  await fsp.writeFile(path.join(__dirname, "..", "dist", dep, zipCode, name), content);
+}
+
+/**
+ *
+ * @param {string} dep
+ * @param {string} name
+ * @param {string | Buffer} content
+ */
+async function writeDepFile(dep, name, content) {
+  await createFolder(dep);
+
+  await fsp.writeFile(path.join(__dirname, "..", "dist", dep, name), content);
 }
 
 async function writeInDist(name, content) {
@@ -47,11 +63,4 @@ function getCacheFilePath(name) {
   return path.join(__dirname, "..", ".cache", sanitize(name));
 }
 
-module.exports = { fileExists, getCacheFilePath, writeZipCodeFile, writeInDist };
-
-
-
-
-
-
-
+module.exports = { fileExists, getCacheFilePath, writeZipCodeFile, writeInDist, writeDepFile };

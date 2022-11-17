@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <%- include('_head', {title: appName }); %>
+  <body>
+    <main class="container">
+      <%- include('_nav'); %>
+      <h1>Rapports pour le département <%= dep %></h1>
+
+      <h2>Code postaux</h2>
+
+      <ul>
+        <% zipCodes.forEach(function ({zipCode, name}) { %>
+        <li><a href="/<%= dep %>/<%= zipCode %>"><%= name %> (<%= zipCode %>)</a></li>
+        <% }); %>
+      </ul>
+
+      <%- include('_france-svg') %>
+      <style>
+        #map path[data-num="<%= dep %>"] {
+          fill: darkblue;
+        }
+      </style>
+
+      <h2>Foire aux questions</h2>
+
+      <%- include('_about'); %>
+    </main>
+  </body>
+</html>
