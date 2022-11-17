@@ -4,7 +4,7 @@ const { getColor } = require("./drawer");
 /**
  * @param {Record<string, import("./dvf").DvfStats>} stats
  * @param {string} key
- * @return {import("chart.js").ChartDataset[]}
+ * @return {import("chart.js").ChartDataSets[]}
  */
 function getCountDataSet(stats, key) {
   return localTypes.map((type, index) => ({
@@ -46,4 +46,5 @@ function convertConfigurationToArray(configuration) {
 }
 
 module.exports = { getConfiguration, convertConfigurationToArray };
+
 

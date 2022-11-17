@@ -1,0 +1,23 @@
+<!-- src/template/_data-table.ejs -->
+<figure>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <% years.forEach(function(year){ %>
+        <th><%= year %></th>
+        <% }); %>
+      </tr>
+    </thead>
+    <tbody>
+      <% rows.forEach(function(row){ %>
+      <tr>
+        <td><%= row[0] %></td>
+        <% years.forEach(function(year, index){ %>
+        <td><%= row[index + 1] %></td>
+        <% }); %>
+      </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</figure>

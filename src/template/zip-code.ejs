@@ -1,59 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-    <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css" />
-  </head>
+  <%- include('_head', {title: `${zipCode} | DVF viewer` }); %>
   <body>
-    <nav>
-      <ul>
-        <li><strong>Brand</strong></li>
-      </ul>
-      <ul>
-        <li><a href="#">Link</a></li>
-        <li><a href="#">Link</a></li>
-        <li><a href="#" role="button">Button</a></li>
-      </ul>
-    </nav>
+
     <main class="container">
+      <%- include('_nav'); %>
       <h1>Données pour le code postal <%= zipCode %></h1>
 
       <div class="grid">
         <article>
           <header>Nombre de mutations par ans</header>
           <img src="./count.svg" />
-
-          <hr />
-
           <details>
             <summary>Données</summary>
-            <figure>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <% years.forEach(function(year){ %>
-                    <th><%= year %></th>
-                    <% }); %>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% countData.forEach(function(row){ %>
-                  <tr>
-                    <td><%= row[0] %></td>
-                    <% years.forEach(function(year, index){ %>
-                      <th><%= row[index + 1] %></th>
-                    <% }); %>
-                  </tr>
-
-                  <% }); %>
-                </tbody>
-              </table>
-            </figure>
-
+            <%- include('_data-table', {years, rows: countData}); %>
             <a href="./count.csv">Télécharger les données (csv)</a>
           </details>
         </article>
@@ -62,31 +22,9 @@
           <img src="./median-price-by-surface.svg" />
           <details>
             <summary>Données</summary>
-            <figure>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <% years.forEach(function(year){ %>
-                    <th><%= year %></th>
-                    <% }); %>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% pricePerM2Data.forEach(function(row){ %>
-                  <tr>
-                    <td><%= row[0] %></td>
-                    <% years.forEach(function(year, index){ %>
-                      <th><%= row[index + 1] %></th>
-                    <% }); %>
-                  </tr>
-
-                  <% }); %>
-                </tbody>
-              </table>
-            </figure>
-
+            <%- include('_data-table', {years, rows: pricePerM2Data}); %>
             <a href="./median-price-by-surface.csv">Télécharger les données (csv)</a>
+          </details>
         </article>
       </div>
     </main>

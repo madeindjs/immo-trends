@@ -22,6 +22,8 @@
     "jsx-template-engine": "^1.0.0",
     "node-fetch": "^3.3.0",
     "sanitize-filename": "^1.6.3"
+  },
+  "devDependencies": {
+    "@types/csv-parse": "^1.2.2"
   }
 }
-
