@@ -20,6 +20,8 @@ async function parseCsvFromUrl(url, parserOpts = {}) {
     return fs.createReadStream(cachedFilename).pipe(parser);
   }
 
+  console.log(`⬇️ download ${url}`);
+
   const cacheStream = fs.createWriteStream(cachedFilename);
 
   const response = await fetch(url);
@@ -44,6 +46,8 @@ async function parseCsvGzFromUrl(url, parserOpts = {}) {
     return fs.createReadStream(cachedFilename).pipe(parser);
   }
 
+  console.log(`⬇️ download ${url}`);
+
   const cacheStream = fs.createWriteStream(cachedFilename);
 
   const response = await fetch(url);
@@ -58,6 +62,9 @@ async function parseCsvGzFromUrl(url, parserOpts = {}) {
 }
 
 module.exports = { parseCsvGzFromUrl, parseCsvFromUrl };
+
+
+
 
 
 

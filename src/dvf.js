@@ -1,10 +1,8 @@
 const { parseCsvGzFromUrl } = require("./fetcher");
-const { Transform, Stream, Readable } = require("stream");
-const os = require("os");
-const path = require("path");
+const { Transform, Readable } = require("stream");
 const fs = require("fs");
 const fsP = require("fs/promises");
-const { fileExists } = require("./file");
+const { fileExists, getCacheFilePath } = require("./file");
 const { median } = require("./math");
 const { getSurface } = require("./record");
 
@@ -29,7 +27,7 @@ class ZipCodeStreamFilter extends Transform {
 }
 
 async function getDvfForZipCodeStream(year, zipCode) {
-  const cachedFilename = path.join(os.tmpdir(), `geo-dvf-api-${getDvfForZipCodeStream.name}-${year}-${zipCode}.csv`);
+  const cachedFilename = getCacheFilePath(`geo-dvf-api-${getDvfForZipCodeStream.name}-${year}-${zipCode}.csv`);
 
   if (await fileExists(cachedFilename)) {
     const buff = await fsP.readFile(cachedFilename);
@@ -143,3 +141,7 @@ async function getDvfStats(year, zipCode) {
 }
 
 module.exports = { getDvfForZipCodeStream, getDvfStats };
+
+
+
+

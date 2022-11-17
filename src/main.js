@@ -6,6 +6,7 @@ const { drawImage } = require("./drawer");
 const { years } = require("./constants");
 const { getConfiguration: getCountByYearConfiguration } = require("./graphs/count-by-year");
 const { getConfiguration: getMedianByYearConfiguration } = require("./graphs/median-price-by-surface");
+const { renderTemplate } = require("./template/renderer");
 
 class ZipCodeStreamFilter extends Transform {
   constructor() {
@@ -39,6 +40,8 @@ class ZipCodeStreamFilter extends Transform {
 async function rowHandler({ data, zipCode }) {
   await drawImage(getCountByYearConfiguration({ data, zipCode }), zipCode, `count`);
   await drawImage(getMedianByYearConfiguration({ data, zipCode }), zipCode, `median-price-by-surface`);
+
+  await renderTemplate("zip-code.ejs", { zipCode });
 }
 
 async function main() {
@@ -55,6 +58,12 @@ async function main() {
 }
 
 main().catch(console.error);
+
+
+
+
+
+
 
 
 
