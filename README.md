@@ -12,9 +12,15 @@ Installez les dépendances
 npm install
 ```
 
-Télécharger les jeux de données et placez les dans le dossier `data`
+Télécharger les jeux de données :
 
-puis lancez
+```sh
+./download-data.sh
+```
+
+Cela télécharge automatiquement les fichiers CSV dans le dossier `data`.
+
+Puis lancez
 
 ```sh
 node compute.js
@@ -28,5 +34,5 @@ node draw.js 69001 69002 69003 69004 69005 69006 69007 69008 69009 69740
 
 ## TODO
 
+- [x] automatiser le téléchargement des données
 - [ ] réaliser des statistiques plus profondes
-- [ ] automatiser le téléchargement des données

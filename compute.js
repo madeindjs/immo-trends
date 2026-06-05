@@ -22,14 +22,28 @@ const kindIndex = fields.indexOf("Type local");
 const dataFolder = path.join(__dirname, "data");
 const computesFolder = path.join(__dirname, "computes");
 
-const files = {
-  2016: path.join(dataFolder, "valeursfoncieres-2016-s2.txt"),
-  2017: path.join(dataFolder, "valeursfoncieres-2017.txt"),
-  2018: path.join(dataFolder, "valeursfoncieres-2018.txt"),
-  2019: path.join(dataFolder, "valeursfoncieres-2019.txt"),
-  2020: path.join(dataFolder, "valeursfoncieres-2020.txt"),
-  2021: path.join(dataFolder, "valeursfoncieres-2021-s1.txt"),
-};
+/**
+ * Extract year from filename
+ * Handles patterns: "2021.json", "valeursfoncieres-2016-s2.txt", etc.
+ * @param {string} filename
+ * @returns {number | null}
+ */
+function extractYear(filename) {
+  const match = filename.match(/(\d{4})/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+// Dynamically discover files in data directory
+const files = {};
+const dirents = fs.readdirSync(dataFolder, { withFileTypes: true });
+for (const dirent of dirents) {
+  if (dirent.isFile()) {
+    const year = extractYear(dirent.name);
+    if (year) {
+      files[year] = path.join(dataFolder, dirent.name);
+    }
+  }
+}
 
 /**
  * @param {string} number
@@ -162,7 +176,5 @@ async function compute(year) {
   fs.writeFileSync(resultFile, JSON.stringify(averagePricePerZipCode, undefined, 2));
 }
 
-Promise.all([compute(2016), compute(2017), compute(2018), compute(2019), compute(2020), compute(2021)]).catch(
-  console.error
-);
-// Promise.all([compute(2020), compute(2021)]).catch(console.error);
+const years = Object.keys(files).map(Number).sort((a, b) => a - b);
+Promise.all(years.map((year) => compute(year))).catch(console.error);
