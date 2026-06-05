@@ -22,6 +22,9 @@ const kindIndex = fields.indexOf("Type local");
 const dataFolder = path.join(__dirname, "data");
 const computesFolder = path.join(__dirname, "computes");
 
+// Create output directory if it doesn't exist
+fs.mkdirSync(computesFolder, { recursive: true });
+
 /**
  * Extract year from filename
  * Handles patterns: "2021.json", "valeursfoncieres-2016-s2.txt", etc.

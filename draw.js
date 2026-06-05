@@ -4,6 +4,11 @@ const fs = require("fs");
 const path = require("path");
 
 const computesFolder = path.join(__dirname, "computes");
+const graphsFolder = path.join(__dirname, "graphs");
+
+// Create output directories if they don't exist
+fs.mkdirSync(computesFolder, { recursive: true });
+fs.mkdirSync(graphsFolder, { recursive: true });
 
 const year = fs.readdirSync(computesFolder).map((file) => Number(file.split(".")[0]));
 
