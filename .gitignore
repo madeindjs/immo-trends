@@ -1,4 +1,10 @@
 node_modules
-data
 computes
 graphs
+immo-trends.db
+immo-trends.db*
+test-immo-trends.db
+test-immo-trends.db*
+
+# Do NOT ignore test-data folder - it contains committed test fixtures
+!test-data/
