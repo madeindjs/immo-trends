@@ -7,6 +7,8 @@ export interface DvfRow {
   id_mutation: string;
   /** Date de la mutation au format ISO-8601 (YYYY-MM-DD) */
   date_mutation: string;
+  /** Année extraite de la date de mutation */
+  year: number;
   /** Numéro de disposition */
   numero_disposition: string;
   /** Nature de la mutation */

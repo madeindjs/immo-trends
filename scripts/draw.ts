@@ -42,7 +42,7 @@ async function drawGraph(): Promise<void> {
 
   // Get available years from database
   const yearsStmt = db.prepare(
-    `SELECT DISTINCT strftime('%Y', date_mutation) as year FROM dvf ORDER BY year ASC`,
+    `SELECT DISTINCT year FROM dvf ORDER BY year ASC`,
   );
   const yearsResult = yearsStmt.all() as Array<{ year: string }>;
   const years: number[] = yearsResult.map((row) => parseInt(row.year, 10));
@@ -67,7 +67,7 @@ async function drawGraph(): Promise<void> {
 
   const getPricesStmt = db.prepare(`
     SELECT valeur_fonciere, surface_reelle_bati FROM dvf 
-    WHERE code_postal = ? AND strftime('%Y', date_mutation) = ? AND type_local = 'Appartement'
+    WHERE code_postal = ? AND year = ? AND type_local = 'Appartement'
   `);
 
   for (const [index, zipCode] of Object.entries(zipCodes)) {

@@ -3,6 +3,7 @@ DROP TABLE IF EXISTS "dvf";
 CREATE TABLE "dvf"(
   "id_mutation" TEXT,
   "date_mutation" DATE,
+  "year" INTEGER GENERATED ALWAYS AS (strftime('%Y', date_mutation)) STORED,
   "numero_disposition" TEXT,
   "nature_mutation" TEXT,
   "valeur_fonciere" TEXT,
@@ -42,6 +43,11 @@ CREATE TABLE "dvf"(
   "longitude" FLOAT,
   "latitude" FLOAT
 );
+
+-- Indexes for draw.ts optimization
+CREATE INDEX idx_dvf_code_postal_type_local_year ON dvf(code_postal, type_local, year);
+CREATE INDEX idx_dvf_year ON dvf(year);
+CREATE INDEX idx_dvf_date_mutation ON dvf(date_mutation);
 
 .import -skip 1 -csv data/dvf.csv dvf
 
