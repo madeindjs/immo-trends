@@ -5,6 +5,7 @@ const readline = require("readline");
 const Database = require("better-sqlite3");
 const ProgressBar = require("progress");
 const { execSync } = require("child_process");
+const { parseDateFr, parseIntFr, parseFloatFr } = require("./import-data-helpers");
 
 // Actual field names from the CSV files
 const fields = [
@@ -112,47 +113,6 @@ function extractYear(filename) {
 }
 
 /**
- * Parse French date format (DD/MM/YYYY) to ISO format (YYYY-MM-DD)
- * @param {string} dateStr
- * @returns {string | undefined}
- */
-function parseDateFr(dateStr) {
-  if (!dateStr || !dateStr.includes('/')) return undefined;
-  const parts = dateStr.split('/');
-  if (parts.length !== 3) return undefined;
-  const day = parts[0].padStart(2, '0');
-  const month = parts[1].padStart(2, '0');
-  const year = parts[2];
-  return `${year}-${month}-${day}`;
-}
-
-/**
- * Parse French integer format (removes comma and decimal part)
- * French format: "185000,00" means 185000 (comma is decimal separator)
- * @param {string} number
- * @returns {number | undefined}
- */
-function parseIntFr(number) {
-  if (!number) return undefined;
-  // Remove comma and everything after it (French integer format)
-  const cleaned = number.split(',')[0];
-  const parsed = parseInt(cleaned, 10);
-  return isNaN(parsed) ? undefined : parsed;
-}
-
-/**
- * Parse French float format (replaces comma with dot)
- * @param {string} number
- * @returns {number | undefined}
- */
-function parseFloatFr(number) {
-  if (!number) return undefined;
-  const cleaned = number.replace(',', '.');
-  const parsed = parseFloat(cleaned);
-  return isNaN(parsed) ? undefined : parsed;
-}
-
-/**
  * Get string value from row at index
  * @param {string[]} row
  * @param {number} index
@@ -257,6 +217,8 @@ function initializeDatabase(db) {
       identifiant_local TEXT,
       nature_culture TEXT,
       nature_culture_speciale TEXT,
+      lat REAL,
+      lng REAL,
       FOREIGN KEY (commune_id) REFERENCES communes(id),
       FOREIGN KEY (nature_mutation_id) REFERENCES nature_mutations(id)
     )
@@ -361,9 +323,9 @@ function importFile(db, year, filepath) {
       reference_document, articles_1_cgi, articles_2_cgi, articles_3_cgi,
       articles_4_cgi, articles_5_cgi, no_plan, no_volume, lot_1, lot_2,
       lot_3, lot_4, lot_5, prefixe_section, section, identifiant_local,
-      nature_culture, nature_culture_speciale
+      nature_culture, nature_culture_speciale, lat, lng
     ) VALUES (
-      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
     )
   `);
 
@@ -459,7 +421,7 @@ function importFile(db, year, filepath) {
           referenceDocument, articles1, articles2, articles3,
           articles4, articles5, noPlan, noVolume, lot1, lot2,
           lot3, lot4, lot5, prefixeSection, section, identifiantLocal,
-          natureCulture, natureCultureSpeciale
+          natureCulture, natureCultureSpeciale, null, null
         );
         inserted++;
       } catch (err) {

@@ -6,7 +6,11 @@
   "scripts": {
     "clean": "rm -f computes/*.json && rm -f immo-trends.db",
     "import-data": "node import-data.js",
-    "draw": "node draw.js"
+    "draw": "node draw.js",
+    "resolve-coords": "node resolve-coordinates.js",
+    "resolve-coords-test": "node resolve-coordinates.js --limit 100 --dry-run",
+    "test": "node import-data.spec.js",
+    "test:watch": "node --watch import-data.spec.js"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +19,8 @@
     "better-sqlite3": "^11.0.0",
     "chart.js": "^4.4.8",
     "chartjs-node-canvas": "^5.0.0",
+    "node-fetch": "^3.3.2",
+    "p-limit": "^4.0.0",
     "progress": "^2.0.3",
     "single-line-log": "^1.1.2"
   }
