@@ -6,26 +6,103 @@ const Database = require("better-sqlite3");
 const ProgressBar = require("progress");
 const { execSync } = require("child_process");
 
-const fields =
-  "Code service CH|Reference document|1 Articles CGI|2 Articles CGI|3 Articles CGI|4 Articles CGI|5 Articles CGI|No disposition|Date mutation|Nature mutation|Valeur fonciere|No voie|B/T/Q|Type de voie|Code voie|Voie|Code postal|Commune|Code departement|Code commune|Prefixe de section|Section|No plan|No Volume|1er lot|Surface Carrez du 1er lot|2eme lot|Surface Carrez du 2eme lot|3eme lot|Surface Carrez du 3eme lot|4eme lot|Surface Carrez du 4eme lot|5eme lot|Surface Carrez du 5eme lot|Nombre de lots|Code type local|Type local|Identifiant local|Surface reelle bati|Nombre pieces principales|Nature culture|Nature culture speciale|Surface terrain".split(
-    "|"
-  );
+// Actual field names from the CSV files
+const fields = [
+  "Identifiant de document",
+  "Reference document",
+  "1 Articles CGI",
+  "2 Articles CGI",
+  "3 Articles CGI",
+  "4 Articles CGI",
+  "5 Articles CGI",
+  "No disposition",
+  "Date mutation",
+  "Nature mutation",
+  "Valeur fonciere",
+  "No voie",
+  "B/T/Q",
+  "Type de voie",
+  "Code voie",
+  "Voie",
+  "Code postal",
+  "Commune",
+  "Code departement",
+  "Code commune",
+  "Prefixe de section",
+  "Section",
+  "No plan",
+  "No Volume",
+  "1er lot",
+  "Surface Carrez du 1er lot",
+  "2eme lot",
+  "Surface Carrez du 2eme lot",
+  "3eme lot",
+  "Surface Carrez du 3eme lot",
+  "4eme lot",
+  "Surface Carrez du 4eme lot",
+  "5eme lot",
+  "Surface Carrez du 5eme lot",
+  "Nombre de lots",
+  "Code type local",
+  "Type local",
+  "Identifiant local",
+  "Surface reelle bati",
+  "Nombre pieces principales",
+  "Nature culture",
+  "Nature culture speciale",
+  "Surface terrain"
+];
 
-const surface1Index = fields.indexOf("Surface Carrez du 1er lot");
-const surface2Index = fields.indexOf("Surface Carrez du 2eme lot");
-const surface3Index = fields.indexOf("Surface Carrez du 3eme lot");
-const surface4Index = fields.indexOf("Surface Carrez du 4eme lot");
-const surface5Index = fields.indexOf("Surface Carrez du 5eme lot");
-const zipCodeIndex = fields.indexOf("Code postal");
-const priceIndex = fields.indexOf("Valeur fonciere");
-const kindIndex = fields.indexOf("Type local");
+// Field indices
+const dateMutationIndex = fields.indexOf("Date mutation");
+const natureMutationIndex = fields.indexOf("Nature mutation");
+const valeurFonciereIndex = fields.indexOf("Valeur fonciere");
+const codePostalIndex = fields.indexOf("Code postal");
+const communeIndex = fields.indexOf("Commune");
+const codeCommuneIndex = fields.indexOf("Code commune");
+const codeDepartementIndex = fields.indexOf("Code departement");
+const typeLocalIndex = fields.indexOf("Type local");
+const codeTypeLocalIndex = fields.indexOf("Code type local");
+const noDispositionIndex = fields.indexOf("No disposition");
+const noVoieIndex = fields.indexOf("No voie");
+const voieIndex = fields.indexOf("Voie");
+const btqIndex = fields.indexOf("B/T/Q");
+const typeVoieIndex = fields.indexOf("Type de voie");
+const codeVoieIndex = fields.indexOf("Code voie");
+const noPlanIndex = fields.indexOf("No plan");
+const noVolumeIndex = fields.indexOf("No Volume");
+const lot1Index = fields.indexOf("1er lot");
+const lot2Index = fields.indexOf("2eme lot");
+const lot3Index = fields.indexOf("3eme lot");
+const lot4Index = fields.indexOf("4eme lot");
+const lot5Index = fields.indexOf("5eme lot");
+const surfaceCarrez1Index = fields.indexOf("Surface Carrez du 1er lot");
+const surfaceCarrez2Index = fields.indexOf("Surface Carrez du 2eme lot");
+const surfaceCarrez3Index = fields.indexOf("Surface Carrez du 3eme lot");
+const surfaceCarrez4Index = fields.indexOf("Surface Carrez du 4eme lot");
+const surfaceCarrez5Index = fields.indexOf("Surface Carrez du 5eme lot");
+const nombrePiecesIndex = fields.indexOf("Nombre pieces principales");
+const surfaceTerrainIndex = fields.indexOf("Surface terrain");
+const surfaceReelleBatiIndex = fields.indexOf("Surface reelle bati");
+const nombreLotsIndex = fields.indexOf("Nombre de lots");
+const identifiantDocumentIndex = fields.indexOf("Identifiant de document");
+const referenceDocumentIndex = fields.indexOf("Reference document");
+const articles1Index = fields.indexOf("1 Articles CGI");
+const articles2Index = fields.indexOf("2 Articles CGI");
+const articles3Index = fields.indexOf("3 Articles CGI");
+const articles4Index = fields.indexOf("4 Articles CGI");
+const articles5Index = fields.indexOf("5 Articles CGI");
+const prefixeSectionIndex = fields.indexOf("Prefixe de section");
+const sectionIndex = fields.indexOf("Section");
+const identifiantLocalIndex = fields.indexOf("Identifiant local");
+const natureCultureIndex = fields.indexOf("Nature culture");
+const natureCultureSpecialeIndex = fields.indexOf("Nature culture speciale");
 
 const dataFolder = path.join(__dirname, "data");
 const dbPath = path.join(__dirname, "immo-trends.db");
 
 /**
  * Extract year from filename
- * Handles patterns: "2021.csv", "2021.txt", "valeursfoncieres-2016-s2.txt", etc.
  * @param {string} filename
  * @returns {number | null}
  */
@@ -35,35 +112,66 @@ function extractYear(filename) {
 }
 
 /**
+ * Parse French date format (DD/MM/YYYY) to ISO format (YYYY-MM-DD)
+ * @param {string} dateStr
+ * @returns {string | undefined}
+ */
+function parseDateFr(dateStr) {
+  if (!dateStr || !dateStr.includes('/')) return undefined;
+  const parts = dateStr.split('/');
+  if (parts.length !== 3) return undefined;
+  const day = parts[0].padStart(2, '0');
+  const month = parts[1].padStart(2, '0');
+  const year = parts[2];
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Parse French integer format (removes comma and decimal part)
+ * French format: "185000,00" means 185000 (comma is decimal separator)
  * @param {string} number
- * @returns {number}
+ * @returns {number | undefined}
  */
-function parseNumberFr(number) {
-  return parseInt(number.split(",")[0]);
+function parseIntFr(number) {
+  if (!number) return undefined;
+  // Remove comma and everything after it (French integer format)
+  const cleaned = number.split(',')[0];
+  const parsed = parseInt(cleaned, 10);
+  return isNaN(parsed) ? undefined : parsed;
 }
 
 /**
- * @param {string[]} row
- * @param {number} index
+ * Parse French float format (replaces comma with dot)
+ * @param {string} number
+ * @returns {number | undefined}
  */
-function getNumber(row, index) {
-  const surface = row[index];
-  return surface ? parseNumberFr(surface) : undefined;
+function parseFloatFr(number) {
+  if (!number) return undefined;
+  const cleaned = number.replace(',', '.');
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? undefined : parsed;
 }
 
 /**
+ * Get string value from row at index
  * @param {string[]} row
  * @param {number} index
+ * @returns {string | undefined}
  */
-const getString = (row, index) => row[index];
+function getString(row, index) {
+  const value = row[index];
+  return value === '' ? undefined : value;
+}
 
 // Dynamically discover files in data directory
 const files = {};
 const dirents = fs.readdirSync(dataFolder, { withFileTypes: true });
 for (const dirent of dirents) {
-  if (dirent.isFile()) {
-    const year = extractYear(dirent.name);
-    if (year) {
+  if (dirent.isFile() && dirent.name.endsWith('.csv')) {
+    // Only match files named exactly like YYYY.csv (e.g., 2021.csv, 2022.csv)
+    const match = dirent.name.match(/^(\d{4})\.csv$/);
+    if (match) {
+      const year = parseInt(match[1], 10);
       files[year] = path.join(dataFolder, dirent.name);
     }
   }
@@ -73,96 +181,298 @@ function initializeDatabase(db) {
   // Enable WAL mode for better write performance
   db.exec("PRAGMA journal_mode = WAL;");
   db.exec("PRAGMA synchronous = NORMAL;");
-  db.exec("PRAGMA cache_size = -20000;"); // 20MB cache
-  
+  db.exec("PRAGMA cache_size = -20000;");
+  db.exec("PRAGMA foreign_keys = ON;");
+
+  // Drop old transactions table
+  db.exec("DROP TABLE IF EXISTS transactions;");
+  db.exec("DROP TABLE IF EXISTS idx_year;");
+  db.exec("DROP TABLE IF EXISTS idx_zip_code;");
+  db.exec("DROP TABLE IF EXISTS idx_year_zip;");
+  db.exec("DROP TABLE IF EXISTS idx_kind;");
+
+  // Create lookup tables
   db.exec(`
-    CREATE TABLE IF NOT EXISTS transactions (
+    CREATE TABLE IF NOT EXISTS communes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      year INTEGER NOT NULL,
-      zip_code TEXT NOT NULL,
-      kind TEXT NOT NULL,
-      surface INTEGER,
-      price INTEGER,
-      price_per_sqm REAL
+      name TEXT UNIQUE NOT NULL,
+      code TEXT,
+      code_postal TEXT,
+      code_departement TEXT
     )
   `);
 
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_year ON transactions(year)`);
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_zip_code ON transactions(zip_code)`);
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_year_zip ON transactions(year, zip_code)`);
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_kind ON transactions(kind)`);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS nature_mutations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT UNIQUE NOT NULL
+    )
+  `);
+
+  // Create main dvf table with all fields
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS dvf (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      year INTEGER NOT NULL,
+      date_mutation DATE,
+      nature_mutation_id INTEGER,
+      valeur_fonciere INTEGER,
+      code_postal TEXT,
+      commune_id INTEGER,
+      code_departement TEXT,
+      code_commune TEXT,
+      type_local TEXT,
+      code_type_local TEXT,
+      no_disposition TEXT,
+      no_voie TEXT,
+      voie TEXT,
+      btq TEXT,
+      type_voie TEXT,
+      code_voie TEXT,
+      surface_carrez_1 REAL,
+      surface_carrez_2 REAL,
+      surface_carrez_3 REAL,
+      surface_carrez_4 REAL,
+      surface_carrez_5 REAL,
+      nombre_pieces_principales INTEGER,
+      surface_terrain REAL,
+      surface_reelle_bati REAL,
+      nombre_lots INTEGER,
+      identifiant_document TEXT,
+      reference_document TEXT,
+      articles_1_cgi TEXT,
+      articles_2_cgi TEXT,
+      articles_3_cgi TEXT,
+      articles_4_cgi TEXT,
+      articles_5_cgi TEXT,
+      no_plan TEXT,
+      no_volume TEXT,
+      lot_1 TEXT,
+      lot_2 TEXT,
+      lot_3 TEXT,
+      lot_4 TEXT,
+      lot_5 TEXT,
+      prefixe_section TEXT,
+      section TEXT,
+      identifiant_local TEXT,
+      nature_culture TEXT,
+      nature_culture_speciale TEXT,
+      FOREIGN KEY (commune_id) REFERENCES communes(id),
+      FOREIGN KEY (nature_mutation_id) REFERENCES nature_mutations(id)
+    )
+  `);
+
+  // Create indexes
+  db.exec("CREATE INDEX IF NOT EXISTS idx_dvf_year ON dvf(year)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_dvf_commune_id ON dvf(commune_id)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_dvf_nature_mutation_id ON dvf(nature_mutation_id)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_dvf_date_mutation ON dvf(date_mutation)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_dvf_code_postal ON dvf(code_postal)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_dvf_year_postal ON dvf(year, code_postal)");
+}
+
+/**
+ * Get or insert a commune into the database
+ * @param {Database.Database} db
+ * @param {Map<string, number>} cache
+ * @param {string} name
+ * @param {string} code
+ * @param {string} codePostal
+ * @param {string} codeDepartement
+ * @returns {number | null}
+ */
+function getOrInsertCommune(db, cache, name, code, codePostal, codeDepartement) {
+  if (!name) return null;
+  
+  const cacheKey = `${name}|${code}`;
+  if (cache.has(cacheKey)) {
+    return cache.get(cacheKey);
+  }
+
+  // Try to find existing commune by name
+  let communeId = db.prepare("SELECT id FROM communes WHERE name = ?").get(name);
+  
+  if (!communeId) {
+    // Insert new commune
+    const result = db.prepare(`
+      INSERT INTO communes (name, code, code_postal, code_departement)
+      VALUES (?, ?, ?, ?)
+    `).run(name, code || null, codePostal || null, codeDepartement || null);
+    communeId = { id: result.lastInsertRowid };
+  }
+  
+  cache.set(cacheKey, communeId.id);
+  return communeId.id;
+}
+
+/**
+ * Get or insert a nature mutation into the database
+ * @param {Database.Database} db
+ * @param {Map<string, number>} cache
+ * @param {string} name
+ * @returns {number | null}
+ */
+function getOrInsertNatureMutation(db, cache, name) {
+  if (!name) return null;
+  
+  if (cache.has(name)) {
+    return cache.get(name);
+  }
+
+  // Try to find existing nature mutation
+  let mutationId = db.prepare("SELECT id FROM nature_mutations WHERE name = ?").get(name);
+  
+  if (!mutationId) {
+    // Insert new nature mutation
+    const result = db.prepare(`
+      INSERT INTO nature_mutations (name)
+      VALUES (?)
+    `).run(name);
+    mutationId = { id: result.lastInsertRowid };
+  }
+  
+  cache.set(name, mutationId.id);
+  return mutationId.id;
 }
 
 function importFile(db, year, filepath) {
-  const total = parseInt(execSync(`wc -l < ${filepath}`).toString().trim());
   const filename = path.basename(filepath);
-  const bar = new ProgressBar(`IMPORT ${year} :bar (ETA :eta s)`, { total, width: 40 });
+  console.log(`  Importing ${filename}...`);
 
   const input = fs.createReadStream(filepath, { encoding: 'utf8' });
   const rl = readline.createInterface({ input });
 
+  // In-memory caches for lookups
+  const communeCache = new Map();
+  const natureMutationCache = new Map();
+
   let lineCount = 0;
   let inserted = 0;
 
+  // Prepare insert statement for dvf
   const insertStmt = db.prepare(`
-    INSERT INTO transactions (year, zip_code, kind, surface, price, price_per_sqm) 
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO dvf (
+      year, date_mutation, nature_mutation_id, valeur_fonciere,
+      code_postal, commune_id, code_departement, code_commune, type_local,
+      code_type_local, no_disposition, no_voie, voie, btq, type_voie,
+      code_voie, surface_carrez_1, surface_carrez_2, surface_carrez_3,
+      surface_carrez_4, surface_carrez_5, nombre_pieces_principales,
+      surface_terrain, surface_reelle_bati, nombre_lots, identifiant_document,
+      reference_document, articles_1_cgi, articles_2_cgi, articles_3_cgi,
+      articles_4_cgi, articles_5_cgi, no_plan, no_volume, lot_1, lot_2,
+      lot_3, lot_4, lot_5, prefixe_section, section, identifiant_local,
+      nature_culture, nature_culture_speciale
+    ) VALUES (
+      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    )
   `);
-  
+
   // Start transaction for bulk inserts
   db.exec("BEGIN TRANSACTION");
 
   return new Promise((resolve, reject) => {
     rl.on('line', (rowString) => {
       lineCount++;
-      bar.tick();
 
       // Skip header and empty lines
       if (lineCount === 1 || !rowString.trim()) {
         return;
       }
+      
+      // Log progress every 10000 lines
+      if (lineCount % 10000 === 0) {
+        process.stdout.write(`\r  Processing ${filename}: ${lineCount} lines...`);
+      }
 
       const row = rowString.split("|");
-      const kind = getString(row, kindIndex);
-
-      if (kind !== "Appartement") {
-        return;
-      }
-
-      const surface =
-        (getNumber(row, surface1Index) ?? 0) +
-        (getNumber(row, surface2Index) ?? 0) +
-        (getNumber(row, surface3Index) ?? 0) +
-        (getNumber(row, surface4Index) ?? 0) +
-        (getNumber(row, surface5Index) ?? 0);
-
-      if (!surface || surface <= 0) {
-        return;
-      }
-
-      const price = getNumber(row, priceIndex);
-      if (!price || price <= 0) {
-        return;
-      }
-
-      const zipCode = getString(row, zipCodeIndex);
-      if (!zipCode) {
-        return;
-      }
-
-      const pricePerSqm = price / surface;
 
       try {
-        insertStmt.run(year, zipCode, kind, surface, price, pricePerSqm);
+        // Parse date mutation
+        const dateMutation = parseDateFr(getString(row, dateMutationIndex));
+
+        // Get nature mutation id
+        const natureMutation = getString(row, natureMutationIndex);
+        const natureMutationId = natureMutation 
+          ? getOrInsertNatureMutation(db, natureMutationCache, natureMutation)
+          : null;
+
+        // Get commune id
+        const commune = getString(row, communeIndex);
+        const codeCommune = getString(row, codeCommuneIndex);
+        const codePostal = getString(row, codePostalIndex);
+        const codeDepartement = getString(row, codeDepartementIndex);
+        const communeId = commune 
+          ? getOrInsertCommune(db, communeCache, commune, codeCommune, codePostal, codeDepartement)
+          : null;
+
+        // Parse integer fields
+        const valeurFonciere = parseIntFr(getString(row, valeurFonciereIndex));
+        const nombrePieces = parseIntFr(getString(row, nombrePiecesIndex));
+        const nombreLots = parseIntFr(getString(row, nombreLotsIndex));
+
+        // Parse float fields
+        const surfaceCarrez1 = parseFloatFr(getString(row, surfaceCarrez1Index));
+        const surfaceCarrez2 = parseFloatFr(getString(row, surfaceCarrez2Index));
+        const surfaceCarrez3 = parseFloatFr(getString(row, surfaceCarrez3Index));
+        const surfaceCarrez4 = parseFloatFr(getString(row, surfaceCarrez4Index));
+        const surfaceCarrez5 = parseFloatFr(getString(row, surfaceCarrez5Index));
+        const surfaceTerrain = parseFloatFr(getString(row, surfaceTerrainIndex));
+        const surfaceReelleBati = parseFloatFr(getString(row, surfaceReelleBatiIndex));
+
+        // Get all other fields as strings
+        const typeLocal = getString(row, typeLocalIndex);
+        const codeTypeLocal = getString(row, codeTypeLocalIndex);
+        const noDisposition = getString(row, noDispositionIndex);
+        const noVoie = getString(row, noVoieIndex);
+        const voie = getString(row, voieIndex);
+        const btq = getString(row, btqIndex);
+        const typeVoie = getString(row, typeVoieIndex);
+        const codeVoie = getString(row, codeVoieIndex);
+        const noPlan = getString(row, noPlanIndex);
+        const noVolume = getString(row, noVolumeIndex);
+        const lot1 = getString(row, lot1Index);
+        const lot2 = getString(row, lot2Index);
+        const lot3 = getString(row, lot3Index);
+        const lot4 = getString(row, lot4Index);
+        const lot5 = getString(row, lot5Index);
+        const prefixeSection = getString(row, prefixeSectionIndex);
+        const section = getString(row, sectionIndex);
+        const identifiantLocal = getString(row, identifiantLocalIndex);
+        const identifiantDocument = getString(row, identifiantDocumentIndex);
+        const referenceDocument = getString(row, referenceDocumentIndex);
+        const articles1 = getString(row, articles1Index);
+        const articles2 = getString(row, articles2Index);
+        const articles3 = getString(row, articles3Index);
+        const articles4 = getString(row, articles4Index);
+        const articles5 = getString(row, articles5Index);
+        const natureCulture = getString(row, natureCultureIndex);
+        const natureCultureSpeciale = getString(row, natureCultureSpecialeIndex);
+
+        // Insert into dvf table
+        insertStmt.run(
+          year, dateMutation, natureMutationId, valeurFonciere,
+          codePostal, communeId, codeDepartement, codeCommune, typeLocal,
+          codeTypeLocal, noDisposition, noVoie, voie, btq, typeVoie,
+          codeVoie, surfaceCarrez1, surfaceCarrez2, surfaceCarrez3,
+          surfaceCarrez4, surfaceCarrez5, nombrePieces,
+          surfaceTerrain, surfaceReelleBati, nombreLots, identifiantDocument,
+          referenceDocument, articles1, articles2, articles3,
+          articles4, articles5, noPlan, noVolume, lot1, lot2,
+          lot3, lot4, lot5, prefixeSection, section, identifiantLocal,
+          natureCulture, natureCultureSpeciale
+        );
         inserted++;
       } catch (err) {
-        // Skip duplicates and errors
+        // Skip errors
+        if (inserted % 1000 === 0) {
+          console.error(`Error on line ${lineCount}:`, err.message);
+        }
       }
     });
 
     rl.on('close', () => {
       db.exec("COMMIT TRANSACTION");
-      console.log(`  Inserted ${inserted} Appartement records for ${year}`);
+      console.log(`  Inserted ${inserted} records for ${year}`);
       resolve();
     });
 
