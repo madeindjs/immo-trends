@@ -4,6 +4,7 @@ Typescript guideline
 - maximize the usage of standard Node library (and use `node:*` resolver)
 - use only `erasableSyntaxOnly` to keep compatibility with node
 - use the node version from `.nvmrc`
+- use `node:test` for testing
 
 Doc
 

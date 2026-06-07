@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import type { DvfRow } from "./types.ts";
+import { getMedian, getPriceStats, calculatePricePerSqm } from "./draw.utils.ts";
 
 const dbPath = path.join(import.meta.dirname, "dvf.sqlite3");
 const graphsFolder = path.join(import.meta.dirname, "graphs");
@@ -34,22 +35,6 @@ const chartJSNodeCanvas = new ChartJSNodeCanvas({
 
 // Type for rows returned by the price query
 type PriceRow = Pick<DvfRow, "valeur_fonciere" | "surface_reelle_bati">;
-
-/**
- * Calculate median from an array of numbers
- * @param {number[]} array
- * @returns {number}
- */
-function getMedian(array: number[]): number {
-  if (array.length === 0) return 0;
-  array = array.slice(0).sort(function (x, y) {
-    return x - y;
-  });
-  const b = (array.length + 1) / 2;
-  return array.length % 2
-    ? array[b - 1]
-    : (array[b - 1.5] + array[b - 0.5]) / 2;
-}
 
 async function drawGraph(): Promise<void> {
   const db = new DatabaseSync(dbPath);
@@ -102,24 +87,12 @@ async function drawGraph(): Promise<void> {
       const rows = getPricesStmt.all(zipCode, year) as PriceRow[];
 
       const prices: number[] = rows
-        .filter(
-          (row) =>
-            row.valeur_fonciere != null &&
-            row.surface_reelle_bati != null &&
-            row.surface_reelle_bati > 0,
-        )
-        .map((row) => Number(row.valeur_fonciere) / row.surface_reelle_bati)
-        .filter((p) => p != null && !isNaN(p));
+        .map((row) => calculatePricePerSqm(row.valeur_fonciere, row.surface_reelle_bati))
+        .filter((p): p is number => p != null);
 
-      if (prices.length > 0) {
-        pricesByYear[year] = {
-          prices,
-          median: getMedian(prices),
-          average: prices.reduce((a, b) => a + b, 0) / prices.length,
-          min: Math.min(...prices),
-          max: Math.max(...prices),
-          count: prices.length,
-        };
+      const stats = getPriceStats(prices);
+      if (stats) {
+        pricesByYear[year] = stats;
       }
     }
 
