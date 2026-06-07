@@ -1,14 +1,15 @@
-// @ts-check
-const path = require("path");
-const fs = require("fs");
-const readline = require("readline");
-const Database = require("better-sqlite3");
-const ProgressBar = require("progress");
-const { execSync } = require("child_process");
-const { parseDateFr, parseIntFr, parseFloatFr } = require("./import-data-helpers");
+import path from "node:path";
+import fs from "node:fs";
+import readline from "node:readline";
+import Database from "better-sqlite3";
+import {
+  parseDateFr,
+  parseIntFr,
+  parseFloatFr,
+} from "./import-data-helpers.ts";
 
 // Actual field names from the CSV files
-const fields = [
+const fields: string[] = [
   "Identifiant de document",
   "Reference document",
   "1 Articles CGI",
@@ -50,8 +51,8 @@ const fields = [
   "Surface reelle bati",
   "Nombre pieces principales",
   "Nature culture",
-  "Nature culture speciale",
-  "Surface terrain"
+  "Nature culture spéciale",
+  "Surface terrain",
 ];
 
 // Field indices
@@ -97,37 +98,25 @@ const prefixeSectionIndex = fields.indexOf("Prefixe de section");
 const sectionIndex = fields.indexOf("Section");
 const identifiantLocalIndex = fields.indexOf("Identifiant local");
 const natureCultureIndex = fields.indexOf("Nature culture");
-const natureCultureSpecialeIndex = fields.indexOf("Nature culture speciale");
+const natureCultureSpecialeIndex = fields.indexOf("Nature culture spéciale");
 
-const dataFolder = path.join(__dirname, "data");
-const dbPath = path.join(__dirname, "immo-trends.db");
-
-/**
- * Extract year from filename
- * @param {string} filename
- * @returns {number | null}
- */
-function extractYear(filename) {
-  const match = filename.match(/(\d{4})/);
-  return match ? parseInt(match[1], 10) : null;
-}
+const dataFolder = path.join(import.meta.dirname, "data");
+const dbPath = path.join(import.meta.dirname, "immo-trends.db");
 
 /**
  * Get string value from row at index
- * @param {string[]} row
- * @param {number} index
- * @returns {string | undefined}
  */
-function getString(row, index) {
+function getString(row: string[], index: number): string {
   const value = row[index];
-  return value === '' ? undefined : value;
+  if (typeof value === "string") return value;
+  return "";
 }
 
 // Dynamically discover files in data directory
-const files = {};
+const files: Record<number, string> = {};
 const dirents = fs.readdirSync(dataFolder, { withFileTypes: true });
 for (const dirent of dirents) {
-  if (dirent.isFile() && dirent.name.endsWith('.csv')) {
+  if (dirent.isFile() && dirent.name.endsWith(".csv")) {
     // Only match files named exactly like YYYY.csv (e.g., 2021.csv, 2022.csv)
     const match = dirent.name.match(/^(\d{4})\.csv$/);
     if (match) {
@@ -137,14 +126,14 @@ for (const dirent of dirents) {
   }
 }
 
-function initializeDatabase(db) {
+function initializeDatabase(db: any): void {
   // Enable WAL mode for better write performance
   db.exec("PRAGMA journal_mode = WAL;");
   db.exec("PRAGMA synchronous = NORMAL;");
   db.exec("PRAGMA cache_size = -20000;");
   db.exec("PRAGMA foreign_keys = ON;");
 
-  // Drop old transactions table
+  // Drop old tables
   db.exec("DROP TABLE IF EXISTS transactions;");
   db.exec("DROP TABLE IF EXISTS idx_year;");
   db.exec("DROP TABLE IF EXISTS idx_zip_code;");
@@ -227,86 +216,98 @@ function initializeDatabase(db) {
   // Create indexes
   db.exec("CREATE INDEX IF NOT EXISTS idx_dvf_year ON dvf(year)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_dvf_commune_id ON dvf(commune_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_dvf_nature_mutation_id ON dvf(nature_mutation_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_dvf_date_mutation ON dvf(date_mutation)");
+  db.exec(
+    "CREATE INDEX IF NOT EXISTS idx_dvf_nature_mutation_id ON dvf(nature_mutation_id)",
+  );
+  db.exec(
+    "CREATE INDEX IF NOT EXISTS idx_dvf_date_mutation ON dvf(date_mutation)",
+  );
   db.exec("CREATE INDEX IF NOT EXISTS idx_dvf_code_postal ON dvf(code_postal)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_dvf_year_postal ON dvf(year, code_postal)");
+  db.exec(
+    "CREATE INDEX IF NOT EXISTS idx_dvf_year_postal ON dvf(year, code_postal)",
+  );
 }
 
-/**
- * Get or insert a commune into the database
- * @param {Database.Database} db
- * @param {Map<string, number>} cache
- * @param {string} name
- * @param {string} code
- * @param {string} codePostal
- * @param {string} codeDepartement
- * @returns {number | null}
- */
-function getOrInsertCommune(db, cache, name, code, codePostal, codeDepartement) {
+function getOrInsertCommune(
+  db: any,
+  cache: Map<string, number>,
+  name: string,
+  code: string | undefined,
+  codePostal: string | undefined,
+  codeDepartement: string | undefined,
+): number | null {
   if (!name) return null;
-  
+
   const cacheKey = `${name}|${code}`;
   if (cache.has(cacheKey)) {
-    return cache.get(cacheKey);
+    return cache.get(cacheKey) as number;
   }
 
   // Try to find existing commune by name
-  let communeId = db.prepare("SELECT id FROM communes WHERE name = ?").get(name);
-  
+  let communeId: { id: number } | null = db
+    .prepare("SELECT id FROM communes WHERE name = ?")
+    .get(name);
+
   if (!communeId) {
     // Insert new commune
-    const result = db.prepare(`
+    const result = db
+      .prepare(
+        `
       INSERT INTO communes (name, code, code_postal, code_departement)
       VALUES (?, ?, ?, ?)
-    `).run(name, code || null, codePostal || null, codeDepartement || null);
-    communeId = { id: result.lastInsertRowid };
+    `,
+      )
+      .run(name, code || null, codePostal || null, codeDepartement || null);
+    communeId = { id: result.lastInsertRowid as number };
   }
-  
+
   cache.set(cacheKey, communeId.id);
   return communeId.id;
 }
 
-/**
- * Get or insert a nature mutation into the database
- * @param {Database.Database} db
- * @param {Map<string, number>} cache
- * @param {string} name
- * @returns {number | null}
- */
-function getOrInsertNatureMutation(db, cache, name) {
+function getOrInsertNatureMutation(
+  db: any,
+  cache: Map<string, number>,
+  name: string,
+): number | null {
   if (!name) return null;
-  
+
   if (cache.has(name)) {
-    return cache.get(name);
+    return cache.get(name) as number;
   }
 
   // Try to find existing nature mutation
-  let mutationId = db.prepare("SELECT id FROM nature_mutations WHERE name = ?").get(name);
-  
+  let mutationId: { id: number } | null = db
+    .prepare("SELECT id FROM nature_mutations WHERE name = ?")
+    .get(name);
+
   if (!mutationId) {
     // Insert new nature mutation
-    const result = db.prepare(`
+    const result = db
+      .prepare(
+        `
       INSERT INTO nature_mutations (name)
       VALUES (?)
-    `).run(name);
-    mutationId = { id: result.lastInsertRowid };
+    `,
+      )
+      .run(name);
+    mutationId = { id: result.lastInsertRowid as number };
   }
-  
+
   cache.set(name, mutationId.id);
   return mutationId.id;
 }
 
-function importFile(db, year, filepath) {
+function importFile(db: any, year: number, filepath: string): Promise<void> {
   const filename = path.basename(filepath);
   console.log(`  Importing ${filename}...`);
 
-  const input = fs.createReadStream(filepath, { encoding: 'utf8' });
+  const input = fs.createReadStream(filepath, { encoding: "utf8" });
   const rl = readline.createInterface({ input });
 
   // In-memory caches for lookups
-  const communeCache = new Map();
-  const natureMutationCache = new Map();
+  const communeCache: Map<string, number> = new Map();
+  const natureMutationCache: Map<string, number> = new Map();
 
   let lineCount = 0;
   let inserted = 0;
@@ -333,17 +334,19 @@ function importFile(db, year, filepath) {
   db.exec("BEGIN TRANSACTION");
 
   return new Promise((resolve, reject) => {
-    rl.on('line', (rowString) => {
+    rl.on("line", (rowString: string) => {
       lineCount++;
 
       // Skip header and empty lines
       if (lineCount === 1 || !rowString.trim()) {
         return;
       }
-      
+
       // Log progress every 10000 lines
       if (lineCount % 10000 === 0) {
-        process.stdout.write(`\r  Processing ${filename}: ${lineCount} lines...`);
+        process.stdout.write(
+          `\r  Processing ${filename}: ${lineCount} lines...`,
+        );
       }
 
       const row = rowString.split("|");
@@ -354,7 +357,7 @@ function importFile(db, year, filepath) {
 
         // Get nature mutation id
         const natureMutation = getString(row, natureMutationIndex);
-        const natureMutationId = natureMutation 
+        const natureMutationId = natureMutation
           ? getOrInsertNatureMutation(db, natureMutationCache, natureMutation)
           : null;
 
@@ -363,8 +366,15 @@ function importFile(db, year, filepath) {
         const codeCommune = getString(row, codeCommuneIndex);
         const codePostal = getString(row, codePostalIndex);
         const codeDepartement = getString(row, codeDepartementIndex);
-        const communeId = commune 
-          ? getOrInsertCommune(db, communeCache, commune, codeCommune, codePostal, codeDepartement)
+        const communeId = commune
+          ? getOrInsertCommune(
+              db,
+              communeCache,
+              commune,
+              codeCommune,
+              codePostal,
+              codeDepartement,
+            )
           : null;
 
         // Parse integer fields
@@ -373,13 +383,27 @@ function importFile(db, year, filepath) {
         const nombreLots = parseIntFr(getString(row, nombreLotsIndex));
 
         // Parse float fields
-        const surfaceCarrez1 = parseFloatFr(getString(row, surfaceCarrez1Index));
-        const surfaceCarrez2 = parseFloatFr(getString(row, surfaceCarrez2Index));
-        const surfaceCarrez3 = parseFloatFr(getString(row, surfaceCarrez3Index));
-        const surfaceCarrez4 = parseFloatFr(getString(row, surfaceCarrez4Index));
-        const surfaceCarrez5 = parseFloatFr(getString(row, surfaceCarrez5Index));
-        const surfaceTerrain = parseFloatFr(getString(row, surfaceTerrainIndex));
-        const surfaceReelleBati = parseFloatFr(getString(row, surfaceReelleBatiIndex));
+        const surfaceCarrez1 = parseFloatFr(
+          getString(row, surfaceCarrez1Index),
+        );
+        const surfaceCarrez2 = parseFloatFr(
+          getString(row, surfaceCarrez2Index),
+        );
+        const surfaceCarrez3 = parseFloatFr(
+          getString(row, surfaceCarrez3Index),
+        );
+        const surfaceCarrez4 = parseFloatFr(
+          getString(row, surfaceCarrez4Index),
+        );
+        const surfaceCarrez5 = parseFloatFr(
+          getString(row, surfaceCarrez5Index),
+        );
+        const surfaceTerrain = parseFloatFr(
+          getString(row, surfaceTerrainIndex),
+        );
+        const surfaceReelleBati = parseFloatFr(
+          getString(row, surfaceReelleBatiIndex),
+        );
 
         // Get all other fields as strings
         const typeLocal = getString(row, typeLocalIndex);
@@ -408,55 +432,96 @@ function importFile(db, year, filepath) {
         const articles4 = getString(row, articles4Index);
         const articles5 = getString(row, articles5Index);
         const natureCulture = getString(row, natureCultureIndex);
-        const natureCultureSpeciale = getString(row, natureCultureSpecialeIndex);
+        const natureCultureSpeciale = getString(
+          row,
+          natureCultureSpecialeIndex,
+        );
 
         // Insert into dvf table
         insertStmt.run(
-          year, dateMutation, natureMutationId, valeurFonciere,
-          codePostal, communeId, codeDepartement, codeCommune, typeLocal,
-          codeTypeLocal, noDisposition, noVoie, voie, btq, typeVoie,
-          codeVoie, surfaceCarrez1, surfaceCarrez2, surfaceCarrez3,
-          surfaceCarrez4, surfaceCarrez5, nombrePieces,
-          surfaceTerrain, surfaceReelleBati, nombreLots, identifiantDocument,
-          referenceDocument, articles1, articles2, articles3,
-          articles4, articles5, noPlan, noVolume, lot1, lot2,
-          lot3, lot4, lot5, prefixeSection, section, identifiantLocal,
-          natureCulture, natureCultureSpeciale, null, null
+          year,
+          dateMutation,
+          natureMutationId,
+          valeurFonciere,
+          codePostal,
+          communeId,
+          codeDepartement,
+          codeCommune,
+          typeLocal,
+          codeTypeLocal,
+          noDisposition,
+          noVoie,
+          voie,
+          btq,
+          typeVoie,
+          codeVoie,
+          surfaceCarrez1,
+          surfaceCarrez2,
+          surfaceCarrez3,
+          surfaceCarrez4,
+          surfaceCarrez5,
+          nombrePieces,
+          surfaceTerrain,
+          surfaceReelleBati,
+          nombreLots,
+          identifiantDocument,
+          referenceDocument,
+          articles1,
+          articles2,
+          articles3,
+          articles4,
+          articles5,
+          noPlan,
+          noVolume,
+          lot1,
+          lot2,
+          lot3,
+          lot4,
+          lot5,
+          prefixeSection,
+          section,
+          identifiantLocal,
+          natureCulture,
+          natureCultureSpeciale,
+          null,
+          null,
         );
         inserted++;
-      } catch (err) {
+      } catch (err: unknown) {
         // Skip errors
         if (inserted % 1000 === 0) {
-          console.error(`Error on line ${lineCount}:`, err.message);
+          console.error(`Error on line ${lineCount}:`, (err as Error).message);
         }
       }
     });
 
-    rl.on('close', () => {
+    rl.on("close", () => {
       db.exec("COMMIT TRANSACTION");
       console.log(`  Inserted ${inserted} records for ${year}`);
       resolve();
     });
 
-    rl.on('error', reject);
+    rl.on("error", reject);
   });
 }
 
-async function importData() {
+async function importData(): Promise<void> {
   console.log("Initializing database...");
   const db = new Database(dbPath);
-  
+
   initializeDatabase(db);
 
-  const years = Object.keys(files).map(Number).sort((a, b) => a - b);
-  
+  const years = Object.keys(files)
+    .map(Number)
+    .sort((a, b) => a - b);
+
   if (years.length === 0) {
     console.log("No data files found in", dataFolder);
     db.close();
     return;
   }
 
-  console.log(`Found ${years.length} years of data: ${years.join(', ')}`);
+  console.log(`Found ${years.length} years of data: ${years.join(", ")}`);
 
   for (const year of years) {
     const filepath = files[year];
