@@ -12,23 +12,15 @@ Installez les dépendances
 npm install
 ```
 
-Télécharger les jeux de données :
+Initialiser les données et la base SQLite :
 
 ```sh
-./download-data.sh
+./init.sh
 ```
 
-Cela télécharge automatiquement les fichiers CSV dans le dossier `data`.
+Cela télécharge automatiquement les fichiers CSV, les décompresse dans le dossier `data` et importe les données dans `dvf.sqlite3`.
 
-Importer les données dans la base SQLite :
-
-```sh
-npm run import-data
-```
-
-Cela crée un fichier `immo-trends.db` avec toutes les transactions pour les appartements.
-
-Ensuite générez le graphique en spécifiant les code postaux
+Ensuite générez le graphique en spécifiant les codes postaux (le schéma de la base est défini dans `init.sql`) :
 
 ```sh
 node draw.js 69001 69002 69003 69004 69005 69006 69007 69008 69009 69740
@@ -38,19 +30,7 @@ Les statistiques (médiane, moyenne, min, max) sont calculées à la volée par 
 
 ## Base de données
 
-Le schéma de la base de données SQLite (`immo-trends.db`) :
-
-```sql
-CREATE TABLE transactions (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  year INTEGER NOT NULL,
-  zip_code TEXT NOT NULL,
-  kind TEXT NOT NULL,
-  surface INTEGER,
-  price INTEGER,
-  price_per_sqm REAL
-)
-```
+Le schéma de la base de données SQLite (`dvf.sqlite3`) est défini dans le fichier `init.sql`.
 
 ## Nettoyage
 
