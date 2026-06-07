@@ -1,9 +1,10 @@
 import { ChartJSNodeCanvas } from "chartjs-node-canvas";
 import fs from "node:fs";
 import path from "node:path";
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
+import type { DvfRow } from "./types.ts";
 
-const dbPath = path.join(import.meta.dirname, "immo-trends.db");
+const dbPath = path.join(import.meta.dirname, "dvf.sqlite3");
 const graphsFolder = path.join(import.meta.dirname, "graphs");
 
 // Create output directories if they don't exist
@@ -31,6 +32,9 @@ const chartJSNodeCanvas = new ChartJSNodeCanvas({
   backgroundColour,
 });
 
+// Type for rows returned by the price query
+type PriceRow = Pick<DvfRow, "valeur_fonciere" | "surface_reelle_bati">;
+
 /**
  * Calculate median from an array of numbers
  * @param {number[]} array
@@ -48,13 +52,14 @@ function getMedian(array: number[]): number {
 }
 
 async function drawGraph(): Promise<void> {
-  const db = new Database(dbPath);
+  const db = new DatabaseSync(dbPath);
 
   // Get available years from database
-  const yearsResult = db
-    .prepare(`SELECT DISTINCT year FROM dvf ORDER BY year ASC`)
-    .all() as Array<{ year: number }>;
-  const years: number[] = yearsResult.map((row) => row.year);
+  const yearsStmt = db.prepare(
+    `SELECT DISTINCT strftime('%Y', date_mutation) as year FROM dvf ORDER BY year ASC`,
+  );
+  const yearsResult = yearsStmt.all() as Array<{ year: string }>;
+  const years: number[] = yearsResult.map((row) => parseInt(row.year, 10));
 
   if (years.length === 0) {
     console.error(
@@ -76,7 +81,7 @@ async function drawGraph(): Promise<void> {
 
   const getPricesStmt = db.prepare(`
     SELECT valeur_fonciere, surface_reelle_bati FROM dvf 
-    WHERE code_postal = ? AND year = ? AND type_local = 'Appartement'
+    WHERE code_postal = ? AND strftime('%Y', date_mutation) = ? AND type_local = 'Appartement'
   `);
 
   for (const [index, zipCode] of Object.entries(zipCodes)) {
@@ -94,10 +99,7 @@ async function drawGraph(): Promise<void> {
     > = {};
 
     for (const year of years) {
-      const rows = getPricesStmt.all(zipCode, year) as Array<{
-        valeur_fonciere: number;
-        surface_reelle_bati: number;
-      }>;
+      const rows = getPricesStmt.all(zipCode, year) as PriceRow[];
 
       const prices: number[] = rows
         .filter(
@@ -106,7 +108,7 @@ async function drawGraph(): Promise<void> {
             row.surface_reelle_bati != null &&
             row.surface_reelle_bati > 0,
         )
-        .map((row) => row.valeur_fonciere / row.surface_reelle_bati)
+        .map((row) => Number(row.valeur_fonciere) / row.surface_reelle_bati)
         .filter((p) => p != null && !isNaN(p));
 
       if (prices.length > 0) {
