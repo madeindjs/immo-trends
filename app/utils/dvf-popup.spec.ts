@@ -16,7 +16,7 @@ describe("buildDvfPopupContent", () => {
       adresse_nom_voie: "CHE DE VOGELAS",
     });
 
-    assert.match(html, /<strong>185[\s\u202f\u00a0]000[\s\u202f\u00a0]?€<\/strong>/);
+    assert.match(html, /<strong>185 000 €<\/strong>/);
     assert.match(html, /5080 CHE DE VOGELAS/);
     assert.match(html, /class="dvf-popup"/);
   });

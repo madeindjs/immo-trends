@@ -4,6 +4,13 @@ const currencyFormatter = new Intl.NumberFormat("fr-FR", {
   maximumFractionDigits: 0,
 });
 
+function formatCurrencyValue(value: number): string {
+  return currencyFormatter
+    .format(value)
+    .replace(/\u202f/g, " ")
+    .replace(/\u00a0/g, " ");
+}
+
 export function formatPropertyPrice(
   value: string | number | null | undefined,
 ): string {
@@ -16,7 +23,7 @@ export function formatPropertyPrice(
     return String(value);
   }
 
-  return currencyFormatter.format(amount);
+  return formatCurrencyValue(amount);
 }
 
 export function formatPricePerSqm(value: number | null | undefined): string {
@@ -24,5 +31,5 @@ export function formatPricePerSqm(value: number | null | undefined): string {
     return "—";
   }
 
-  return currencyFormatter.format(value);
+  return formatCurrencyValue(value);
 }
