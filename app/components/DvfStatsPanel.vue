@@ -124,6 +124,10 @@ const props = defineProps<{
   filtersValid: boolean;
 }>();
 
+const emit = defineEmits<{
+  hoverYear: [year: number | null];
+}>();
+
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
 let chart: Chart<"line"> | null = null;
 
@@ -176,6 +180,16 @@ function buildChartConfig(): ChartConfiguration<"line"> {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      onHover(_event, elements) {
+        if (elements.length === 0) {
+          emit("hoverYear", null);
+          return;
+        }
+
+        const index = elements[0]?.index;
+        const year = index == null ? null : (props.trends[index]?.year ?? null);
+        emit("hoverYear", year);
+      },
       interaction: {
         mode: "index",
         intersect: false,
@@ -221,8 +235,11 @@ function buildChartConfig(): ChartConfiguration<"line"> {
 }
 
 function destroyChart(): void {
-  chart?.destroy();
-  chart = null;
+  if (chart) {
+    emit("hoverYear", null);
+    chart.destroy();
+    chart = null;
+  }
 }
 
 function renderChart(): void {

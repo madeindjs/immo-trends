@@ -63,6 +63,7 @@
           :error="trendsError"
           :zoom-too-low="zoomTooLowForData"
           :filters-valid="filtersAreValid()"
+          @hover-year="hoveredTrendYear = $event"
         />
       </div>
 
@@ -217,6 +218,7 @@ const filters = ref<DvfPointFilters>({
   yearMax: new Date().getFullYear(),
 });
 const statsPanelCollapsed = ref(loadStatsPanelCollapsed());
+const hoveredTrendYear = ref<number | null>(null);
 
 function loadStatsPanelCollapsed(): boolean {
   try {
@@ -241,13 +243,27 @@ function filtersAreValid(): boolean {
   );
 }
 
+function getMutationYear(dateMutation: string): number {
+  return Number(dateMutation.slice(0, 4));
+}
+
+function getVisiblePoints(): DvfMapPoint[] {
+  if (hoveredTrendYear.value === null) {
+    return points.value;
+  }
+
+  return points.value.filter(
+    (point) => getMutationYear(point.date_mutation) === hoveredTrendYear.value,
+  );
+}
+
 function buildFeatureCollection(): FeatureCollection<
   Point,
   DvfFeatureProperties
 > {
   return {
     type: "FeatureCollection",
-    features: points.value.map(toFeature),
+    features: getVisiblePoints().map(toFeature),
   };
 }
 
@@ -375,7 +391,7 @@ function invalidateMapSize(): void {
   mapInstance.value?.invalidateSize();
 }
 
-watch([points, stats], () => {
+watch([points, stats, hoveredTrendYear], () => {
   void renderPoints();
 });
 
