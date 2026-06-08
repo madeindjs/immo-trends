@@ -200,6 +200,7 @@ describe("queryDvfInBounds", () => {
 
     assert.ok(result.points.length >= 2);
     assert.strictEqual(result.points[0]?.nom_commune, "Val-Revermont");
+    assert.strictEqual(result.points[0]?.adresse_numero, "5080");
   });
 
   it("returns price-per-sqm stats for the bounding box", () => {

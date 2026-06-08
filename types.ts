@@ -112,6 +112,8 @@ export type DvfMapPoint = {
   surface_reelle_bati: number | null;
   code_postal: string;
   nom_commune: string;
+  adresse_numero: string;
+  adresse_suffixe: string;
   adresse_nom_voie: string;
   latitude: number;
   longitude: number;

@@ -45,6 +45,8 @@ type DvfMapPointRow = {
   surface_reelle_bati: number | null;
   code_postal: string;
   nom_commune: string;
+  adresse_numero: string;
+  adresse_suffixe: string;
   adresse_nom_voie: string;
   latitude: number;
   longitude: number;
@@ -245,6 +247,8 @@ export function queryDvfInBounds(
         surface_reelle_bati,
         code_postal,
         nom_commune,
+        adresse_numero,
+        adresse_suffixe,
         adresse_nom_voie,
         latitude,
         longitude

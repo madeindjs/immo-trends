@@ -35,6 +35,8 @@ Returns DVF transaction points for the current map bounding box.
       "surface_reelle_bati": 97,
       "code_postal": "01370",
       "nom_commune": "Val-Revermont",
+      "adresse_numero": "5080",
+      "adresse_suffixe": "",
       "adresse_nom_voie": "CHE DE VOGELAS",
       "latitude": 46.327101,
       "longitude": 5.386107

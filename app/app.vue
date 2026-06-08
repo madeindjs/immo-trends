@@ -84,6 +84,7 @@ import type { Feature, FeatureCollection, Point } from "geojson";
 import type { GeoJSON, Map } from "leaflet";
 import { MIN_FETCH_ZOOM } from "./composables/useDvfPoints.ts";
 import { pricePerSqmToColor } from "./utils/dvf-color.ts";
+import { buildDvfPopupContent } from "./utils/dvf-popup.ts";
 import type { DvfMapPoint } from "../types.ts";
 import { calculatePricePerSqm } from "../scripts/draw.utils.ts";
 import type { DvfPointFilters } from "./composables/useDvfPoints.ts";
@@ -106,21 +107,10 @@ type DvfFeatureProperties = {
   surface_reelle_bati: number | null;
   code_postal: string;
   nom_commune: string;
+  adresse_numero: string;
+  adresse_suffixe: string;
   adresse_nom_voie: string;
 };
-
-function formatPrice(value: string): string {
-  const amount = Number(value);
-  if (!Number.isFinite(amount)) {
-    return value;
-  }
-
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 function toFeature(point: DvfMapPoint): Feature<Point, DvfFeatureProperties> {
   return {
@@ -137,25 +127,11 @@ function toFeature(point: DvfMapPoint): Feature<Point, DvfFeatureProperties> {
       surface_reelle_bati: point.surface_reelle_bati,
       code_postal: point.code_postal,
       nom_commune: point.nom_commune,
+      adresse_numero: point.adresse_numero,
+      adresse_suffixe: point.adresse_suffixe,
       adresse_nom_voie: point.adresse_nom_voie,
     },
   };
-}
-
-function buildPopupContent(properties: DvfFeatureProperties): string {
-  const surface =
-    properties.surface_reelle_bati === null
-      ? "—"
-      : `${properties.surface_reelle_bati} m²`;
-
-  return [
-    `<strong>${formatPrice(properties.valeur_fonciere)}</strong>`,
-    properties.date_mutation,
-    properties.type_local || "—",
-    properties.adresse_nom_voie || "—",
-    `${properties.code_postal} ${properties.nom_commune}`,
-    `Surface: ${surface}`,
-  ].join("<br>");
 }
 
 const mapReady = ref(false);
@@ -327,9 +303,18 @@ async function renderPoints(): Promise<void> {
       });
     },
     onEachFeature(feature, layer) {
-      layer.bindPopup(
-        buildPopupContent(feature.properties as DvfFeatureProperties),
-      );
+      const properties = feature.properties as DvfFeatureProperties;
+
+      layer.bindPopup(buildDvfPopupContent(properties), {
+        closeButton: false,
+        autoPan: false,
+      });
+      layer.on("mouseover", (event) => {
+        event.target.openPopup();
+      });
+      layer.on("mouseout", (event) => {
+        event.target.closePopup();
+      });
     },
   });
 
@@ -503,5 +488,9 @@ body,
 
 .filter-control-btn:hover {
   background: #f4f4f4;
+}
+
+:global(.leaflet-popup-content .dvf-popup) {
+  line-height: 1.4;
 }
 </style>
