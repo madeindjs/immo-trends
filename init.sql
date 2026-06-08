@@ -40,8 +40,7 @@ CREATE TABLE "dvf"(
   "nature_culture_speciale" TEXT,
   "surface_terrain" INTEGER,
   "longitude" FLOAT,
-  "latitude" FLOAT,
-  "code_iris" TEXT
+  "latitude" FLOAT
 );
 
 .import -skip 1 -csv data/dvf.csv dvf

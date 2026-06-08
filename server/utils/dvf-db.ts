@@ -24,7 +24,6 @@ export type DvfQueryFilters = {
   surfaceMax?: number;
   pricePerSqmMin?: number;
   pricePerSqmMax?: number;
-  codeIris?: string;
   limit: number;
 };
 
@@ -69,29 +68,24 @@ type DvfSpatialFilters = Pick<
   | "surfaceMax"
   | "pricePerSqmMin"
   | "pricePerSqmMax"
-  | "codeIris"
 >;
 
 function buildWhereClause(
   bounds: DvfBounds,
   filters: DvfSpatialFilters,
 ): { conditions: string[]; params: Array<string | number> } {
-  const conditions: string[] = [
+  const conditions = [
+    "latitude BETWEEN ? AND ?",
+    "longitude BETWEEN ? AND ?",
     "latitude IS NOT NULL",
     "longitude IS NOT NULL",
   ];
-  const params: Array<string | number> = [];
-
-  if (filters.codeIris) {
-    conditions.push("code_iris = ?");
-    params.push(filters.codeIris);
-  } else {
-    conditions.push(
-      "latitude BETWEEN ? AND ?",
-      "longitude BETWEEN ? AND ?",
-    );
-    params.push(bounds.south, bounds.north, bounds.west, bounds.east);
-  }
+  const params: Array<string | number> = [
+    bounds.south,
+    bounds.north,
+    bounds.west,
+    bounds.east,
+  ];
 
   if (filters.typeLocals && filters.typeLocals.length > 0) {
     const placeholders = filters.typeLocals.map(() => "?").join(", ");

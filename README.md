@@ -12,19 +12,13 @@ Installez les dépendances
 npm install
 ```
 
-Prérequis système pour l'import des données :
-
-- `sqlite3`
-- `7z` (p7zip)
-- `ogr2ogr` (GDAL)
-
 Initialiser les données et la base SQLite :
 
 ```sh
 ./init.sh
 ```
 
-Cela télécharge automatiquement les fichiers CSV et les contours IRIS IGN, les décompresse dans le dossier `data` et importe les données dans `dvf.sqlite3` (transactions DVF + zones IRIS).
+Cela télécharge automatiquement les fichiers CSV, les décompresse dans le dossier `data` et importe les données dans `dvf.sqlite3`.
 
 Ensuite générez le graphique en spécifiant les codes postaux (le schéma de la base est défini dans `init.sql`) :
 
@@ -46,7 +40,7 @@ npm run dev
 
 Ouvrir [http://localhost:3000](http://localhost:3000) dans le navigateur.
 
-La carte charge les transactions DVF visibles dans la fenêtre courante via l'API `GET /api/dvf`. Les zones IRIS s'affichent à partir du zoom 9 via `GET /api/iris` ; cliquez sur une zone pour restreindre les résultats à cet IRIS. Un panneau statistiques en bas de la carte affiche le min/médiane/max au m² et l'évolution annuelle via `GET /api/dvf-trends`. Zoomez au niveau 10 ou plus pour afficher les points. Voir la [documentation de l'API](docs/api.md).
+La carte charge les transactions DVF visibles dans la fenêtre courante via l'API `GET /api/dvf`. Un panneau statistiques en bas de la carte affiche le min/médiane/max au m² et l'évolution annuelle via `GET /api/dvf-trends`. Zoomez au niveau 10 ou plus pour afficher les points. Voir la [documentation de l'API](docs/api.md).
 
 > **macOS** : Nuxt 4.4.7 place le socket vite-node dans un chemin temporaire qui peut dépasser la limite de 104 caractères du système. Le script `dev` utilise `TMPDIR=/tmp` pour contourner ce problème ([nuxt/nuxt#35264](https://github.com/nuxt/nuxt/issues/35264)).
 
@@ -60,7 +54,7 @@ npm run generate  # génération statique
 
 ## Base de données
 
-Le schéma de la base de données SQLite (`dvf.sqlite3`) est défini dans le fichier `init.sql`. Les zones IRIS sont importées dans la table `iris` (`iris.sql`). Les index de la carte sont créés automatiquement à l'import (`indexes.sql`). Pour une base existante :
+Le schéma de la base de données SQLite (`dvf.sqlite3`) est défini dans le fichier `init.sql`. Les index de la carte sont créés automatiquement à l'import (`indexes.sql`). Pour une base existante :
 
 ```sh
 sqlite3 dvf.sqlite3 < indexes.sql

@@ -25,8 +25,6 @@ export type DvfPointFilters = {
   surfaceMax: number | null;
   pricePerSqmMin: number | null;
   pricePerSqmMax: number | null;
-  codeIris: string | null;
-  irisLabel: string | null;
 };
 
 function isAbortError(error: unknown): boolean {
@@ -66,7 +64,7 @@ export function useDvfPoints() {
   ): Promise<void> {
     cancelPending();
 
-    if (zoom < MIN_FETCH_ZOOM && filters.codeIris == null) {
+    if (zoom < MIN_FETCH_ZOOM) {
       points.value = [];
       stats.value = { ...EMPTY_STATS };
       truncated.value = false;

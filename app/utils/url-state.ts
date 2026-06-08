@@ -34,8 +34,6 @@ export function getDefaultFilters(): DvfPointFilters {
     surfaceMax: null,
     pricePerSqmMin: null,
     pricePerSqmMax: null,
-    codeIris: null,
-    irisLabel: null,
   };
 }
 
@@ -171,9 +169,6 @@ export function parseUrlState(query: UrlQuery): AppUrlState {
   const typeLocals = allValues(query.type_local);
   const yearMin = parseOptionalYear(query.year_min) ?? defaults.yearMin;
   const yearMax = parseOptionalYear(query.year_max) ?? defaults.yearMax;
-  const rawIris = firstValue(query.iris);
-  const codeIris =
-    rawIris !== undefined && /^\d{9}$/.test(rawIris) ? rawIris : null;
 
   return {
     zoom,
@@ -186,8 +181,6 @@ export function parseUrlState(query: UrlQuery): AppUrlState {
       surfaceMax: parseOptionalPositiveNumber(query.surface_max),
       pricePerSqmMin: parseOptionalPositiveNumber(query.price_per_sqm_min),
       pricePerSqmMax: parseOptionalPositiveNumber(query.price_per_sqm_max),
-      codeIris,
-      irisLabel: null,
     },
   };
 }
@@ -233,10 +226,6 @@ export function buildUrlQuery(state: AppUrlState): UrlQuery {
 
   if (state.filters.pricePerSqmMax != null) {
     query.price_per_sqm_max = String(state.filters.pricePerSqmMax);
-  }
-
-  if (state.filters.codeIris != null) {
-    query.iris = state.filters.codeIris;
   }
 
   return query;

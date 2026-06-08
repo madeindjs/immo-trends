@@ -41,7 +41,7 @@ export function useDvfTrends() {
   ): Promise<void> {
     cancelPending();
 
-    if (zoom < MIN_FETCH_ZOOM && filters.codeIris == null) {
+    if (zoom < MIN_FETCH_ZOOM) {
       trends.value = [];
       error.value = null;
       return;

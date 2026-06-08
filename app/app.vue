@@ -23,17 +23,6 @@
             />
           </LMap>
 
-          <button
-            v-if="filters.codeIris"
-            type="button"
-            class="clear-zone-btn"
-            aria-label="Effacer la zone IRIS"
-            title="Effacer la zone"
-            @click="clearSelectedZone"
-          >
-            Effacer la zone
-          </button>
-
           <label
             for="dvf-filter-drawer"
             class="filter-control-btn"
@@ -114,10 +103,9 @@
 </template>
 
 <script setup lang="ts">
-import type { Feature, FeatureCollection, Point, Polygon } from "geojson";
-import type { GeoJSON, LatLngBounds, Layer, Map } from "leaflet";
+import type { Feature, FeatureCollection, Point } from "geojson";
+import type { GeoJSON, Map } from "leaflet";
 import { MIN_FETCH_ZOOM } from "./composables/useDvfPoints.ts";
-import { useIrisZones, type IrisZoneFeature } from "./composables/useIrisZones.ts";
 import { pricePerSqmToColor } from "./utils/dvf-color.ts";
 import { buildDvfPopupContent } from "./utils/dvf-popup.ts";
 import type { DvfMapPoint } from "../types.ts";
@@ -179,12 +167,6 @@ const center = ref<[number, number]>(DEFAULT_CENTER);
 const mapInstance = shallowRef<Map | null>(null);
 const leafletModule = shallowRef<LeafletModule | null>(null);
 const dvfLayer = shallowRef<GeoJSON | null>(null);
-const irisLayer = shallowRef<GeoJSON | null>(null);
-const {
-  zones: irisZones,
-  cancelPending: cancelIrisPending,
-  scheduleFetch: scheduleIrisFetch,
-} = useIrisZones();
 const {
   points,
   stats,
@@ -257,9 +239,7 @@ function saveStatsPanelCollapsed(collapsed: boolean): void {
 }
 
 const zoomTooLowForData = computed(
-  () =>
-    filters.value.codeIris == null &&
-    (mapInstance.value?.getZoom() ?? zoom.value) < MIN_FETCH_ZOOM,
+  () => (mapInstance.value?.getZoom() ?? zoom.value) < MIN_FETCH_ZOOM,
 );
 
 function filtersAreValid(): boolean {
@@ -325,49 +305,6 @@ function buildFeatureCollection(): FeatureCollection<
     type: "FeatureCollection",
     features: getVisiblePoints().map(toFeature),
   };
-}
-
-function buildIrisFeatureCollection(): FeatureCollection<
-  Polygon,
-  IrisZoneFeature["properties"]
-> {
-  return {
-    type: "FeatureCollection",
-    features: irisZones.value,
-  };
-}
-
-function formatIrisLabel(properties: IrisZoneFeature["properties"]): string {
-  const irisName = properties.nom_iris ?? properties.code_iris;
-  const communeName = properties.nom_com ?? properties.insee_com;
-  return `${irisName}, ${communeName}`;
-}
-
-function selectIrisZone(feature: IrisZoneFeature, layer: Layer): void {
-  filters.value = {
-    ...filters.value,
-    codeIris: feature.properties.code_iris,
-    irisLabel: formatIrisLabel(feature.properties),
-  };
-
-  const map = mapInstance.value;
-  if (map) {
-    const bounds = (layer as Layer & { getBounds?: () => LatLngBounds }).getBounds?.();
-    if (bounds) {
-      map.fitBounds(bounds, { padding: [24, 24] });
-    }
-  }
-
-  refreshData();
-}
-
-function clearSelectedZone(): void {
-  filters.value = {
-    ...filters.value,
-    codeIris: null,
-    irisLabel: null,
-  };
-  refreshData();
 }
 
 async function getLeaflet(): Promise<LeafletModule> {
@@ -451,50 +388,6 @@ async function renderPoints(): Promise<void> {
   dvfLayer.value.addTo(map);
 }
 
-async function renderIrisZones(): Promise<void> {
-  const map = mapInstance.value;
-  if (!map) {
-    return;
-  }
-
-  const L = await getLeaflet();
-
-  if (irisLayer.value) {
-    map.removeLayer(irisLayer.value);
-    irisLayer.value = null;
-  }
-
-  if (irisZones.value.length === 0) {
-    return;
-  }
-
-  const selectedCode = filters.value.codeIris;
-
-  irisLayer.value = L.geoJSON(buildIrisFeatureCollection(), {
-    style(feature) {
-      const isSelected =
-        selectedCode != null &&
-        feature?.properties?.code_iris === selectedCode;
-
-      return {
-        color: isSelected ? "#1d4ed8" : "#64748b",
-        weight: isSelected ? 2.5 : 1,
-        fillColor: isSelected ? "#3b82f6" : "#94a3b8",
-        fillOpacity: isSelected ? 0.25 : 0.08,
-      };
-    },
-    onEachFeature(feature, layer) {
-      const zoneFeature = feature as IrisZoneFeature;
-      layer.on("click", (event) => {
-        event.originalEvent.stopPropagation();
-        selectIrisZone(zoneFeature, layer);
-      });
-    },
-  });
-
-  irisLayer.value.addTo(map);
-}
-
 type StatusToast = {
   message: string;
   alertClass: string;
@@ -531,29 +424,17 @@ const statusToast = computed((): StatusToast | null => {
     };
   }
 
-  const zonePrefix =
-    filters.value.codeIris && filters.value.irisLabel
-      ? `Zone : ${filters.value.irisLabel} — `
-      : "";
-
   if (truncated.value) {
     return {
-      message: `${zonePrefix}${points.value.length} transactions affichées (résultats tronqués).`,
+      message: `${points.value.length} transactions affichées (résultats tronqués).`,
       alertClass: "alert-success",
     };
   }
 
   if (points.value.length > 0) {
     return {
-      message: `${zonePrefix}${points.value.length} transactions affichées.`,
+      message: `${points.value.length} transactions affichées.`,
       alertClass: "alert-success",
-    };
-  }
-
-  if (filters.value.codeIris && filters.value.irisLabel) {
-    return {
-      message: `Zone : ${filters.value.irisLabel} — aucune transaction DVF.`,
-      alertClass: "alert-info",
     };
   }
 
@@ -571,27 +452,8 @@ function refreshData(): void {
 
   const bounds = map.getBounds();
   const currentZoom = map.getZoom();
-  scheduleIrisFetch(bounds, currentZoom);
   scheduleFetch(bounds, currentZoom, filters.value);
   scheduleTrendsFetch(bounds, currentZoom, filters.value);
-}
-
-function syncIrisLabelFromZones(): void {
-  const codeIris = filters.value.codeIris;
-  if (!codeIris || filters.value.irisLabel) {
-    return;
-  }
-
-  const matchingZone = irisZones.value.find(
-    (zone) => zone.properties.code_iris === codeIris,
-  );
-
-  if (matchingZone) {
-    filters.value = {
-      ...filters.value,
-      irisLabel: formatIrisLabel(matchingZone.properties),
-    };
-  }
 }
 
 function invalidateMapSize(): void {
@@ -600,11 +462,6 @@ function invalidateMapSize(): void {
 
 watch([points, stats, hoveredTrendMonth], () => {
   void renderPoints();
-});
-
-watch([irisZones, () => filters.value.codeIris], () => {
-  syncIrisLabelFromZones();
-  void renderIrisZones();
 });
 
 watch(filters, () => {
@@ -620,13 +477,9 @@ watch(statsPanelCollapsed, (collapsed) => {
 
 onBeforeUnmount(() => {
   cancelDetailPending();
-  cancelIrisPending();
   const map = mapInstance.value;
   if (map && dvfLayer.value) {
     map.removeLayer(dvfLayer.value);
-  }
-  if (map && irisLayer.value) {
-    map.removeLayer(irisLayer.value);
   }
 });
 
@@ -649,7 +502,6 @@ function onMapReady(map: Map): void {
   const handleMoveStart = () => {
     cancelPending();
     cancelTrendsPending();
-    cancelIrisPending();
   };
 
   map.on("movestart", handleMoveStart);
@@ -658,7 +510,6 @@ function onMapReady(map: Map): void {
   map.on("zoomend", handleViewportChange);
   refreshData();
   void renderPoints();
-  void renderIrisZones();
 }
 </script>
 
@@ -704,27 +555,6 @@ body,
 }
 
 .filter-control-btn:hover {
-  background: #f4f4f4;
-}
-
-.clear-zone-btn {
-  position: absolute;
-  top: 74px;
-  left: 50px;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  height: 30px;
-  padding: 0 10px;
-  border: 2px solid rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-  background: #fff;
-  color: #333;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.clear-zone-btn:hover {
   background: #f4f4f4;
 }
 

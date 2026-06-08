@@ -34,9 +34,5 @@ export function buildDvfQueryParams(
     query.price_per_sqm_max = filters.pricePerSqmMax;
   }
 
-  if (filters.codeIris != null) {
-    query.code_iris = filters.codeIris;
-  }
-
   return query;
 }
