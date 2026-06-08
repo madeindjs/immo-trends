@@ -53,6 +53,7 @@
               <span>{{ statusToast.message }}</span>
             </div>
           </div>
+
         </div>
 
         <DvfStatsPanel
@@ -63,7 +64,7 @@
           :error="trendsError"
           :zoom-too-low="zoomTooLowForData"
           :filters-valid="filtersAreValid()"
-          @hover-year="hoveredTrendYear = $event"
+          @hover-month="hoveredTrendMonth = $event"
         />
       </div>
 
@@ -76,6 +77,28 @@
         <DvfFilterPanel v-model="filters" />
       </div>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="detailOpen"
+        class="detail-drawer fixed inset-0 z-[1002]"
+      >
+        <button
+          type="button"
+          class="absolute inset-0 bg-black/40"
+          aria-label="Fermer le détail"
+          @click="closeDetail"
+        />
+        <div class="absolute inset-y-0 right-0 flex">
+          <DvfDetailPanel
+            :row="detailRow"
+            :loading="detailLoading"
+            :error="detailError"
+            @close="closeDetail"
+          />
+        </div>
+      </div>
+    </Teleport>
   </ClientOnly>
 </template>
 
@@ -100,11 +123,13 @@ type LeafletModule = typeof import("leaflet/dist/leaflet-src.esm");
 const STATS_PANEL_STORAGE_KEY = "immo-trends.stats-panel-collapsed";
 
 type DvfFeatureProperties = {
+  rowid: number;
   id_mutation: string;
   date_mutation: string;
   valeur_fonciere: string;
   type_local: string;
   surface_reelle_bati: number | null;
+  nombre_pieces_principales: number | null;
   code_postal: string;
   nom_commune: string;
   adresse_numero: string;
@@ -120,11 +145,13 @@ function toFeature(point: DvfMapPoint): Feature<Point, DvfFeatureProperties> {
       coordinates: [point.longitude, point.latitude],
     },
     properties: {
+      rowid: point.rowid,
       id_mutation: point.id_mutation,
       date_mutation: point.date_mutation,
       valeur_fonciere: point.valeur_fonciere,
       type_local: point.type_local,
       surface_reelle_bati: point.surface_reelle_bati,
+      nombre_pieces_principales: point.nombre_pieces_principales,
       code_postal: point.code_postal,
       nom_commune: point.nom_commune,
       adresse_numero: point.adresse_numero,
@@ -156,10 +183,19 @@ const {
   cancelPending: cancelTrendsPending,
   scheduleFetch: scheduleTrendsFetch,
 } = useDvfTrends();
+const {
+  row: detailRow,
+  loading: detailLoading,
+  error: detailError,
+  fetchDetail,
+  clear: clearDetail,
+  cancelPending: cancelDetailPending,
+} = useDvfDetail();
 
 const filters = ref<DvfPointFilters>(getDefaultFilters());
+const detailOpen = ref(false);
 const statsPanelCollapsed = ref(loadStatsPanelCollapsed());
-const hoveredTrendYear = ref<number | null>(null);
+const hoveredTrendMonth = ref<string | null>(null);
 const { initializeFromUrl, pushMapState } = useAppUrlState(
   {
     zoom,
@@ -236,18 +272,29 @@ function filtersAreValid(): boolean {
   return true;
 }
 
-function getMutationYear(dateMutation: string): number {
-  return Number(dateMutation.slice(0, 4));
+function getMutationMonth(dateMutation: string): string {
+  return dateMutation.slice(0, 7);
 }
 
 function getVisiblePoints(): DvfMapPoint[] {
-  if (hoveredTrendYear.value === null) {
+  if (hoveredTrendMonth.value === null) {
     return points.value;
   }
 
   return points.value.filter(
-    (point) => getMutationYear(point.date_mutation) === hoveredTrendYear.value,
+    (point) =>
+      getMutationMonth(point.date_mutation) === hoveredTrendMonth.value,
   );
+}
+
+function openDetail(rowid: number): void {
+  detailOpen.value = true;
+  void fetchDetail(rowid);
+}
+
+function closeDetail(): void {
+  detailOpen.value = false;
+  clearDetail();
 }
 
 function buildFeatureCollection(): FeatureCollection<
@@ -309,11 +356,31 @@ async function renderPoints(): Promise<void> {
         closeButton: false,
         autoPan: false,
       });
+      const handleOpenDetail = (event: { originalEvent: Event }): void => {
+        event.originalEvent.stopPropagation();
+        openDetail(properties.rowid);
+      };
+
       layer.on("mouseover", (event) => {
         event.target.openPopup();
       });
       layer.on("mouseout", (event) => {
         event.target.closePopup();
+      });
+      layer.on("click", handleOpenDetail);
+      layer.on("popupopen", () => {
+        const popupContent = layer
+          .getPopup()
+          ?.getElement()
+          ?.querySelector(".dvf-popup");
+
+        if (popupContent instanceof HTMLElement) {
+          popupContent.classList.add("dvf-popup-clickable");
+          popupContent.addEventListener("click", (mouseEvent) => {
+            mouseEvent.stopPropagation();
+            openDetail(properties.rowid);
+          });
+        }
       });
     },
   });
@@ -393,7 +460,7 @@ function invalidateMapSize(): void {
   mapInstance.value?.invalidateSize();
 }
 
-watch([points, stats, hoveredTrendYear], () => {
+watch([points, stats, hoveredTrendMonth], () => {
   void renderPoints();
 });
 
@@ -409,6 +476,7 @@ watch(statsPanelCollapsed, (collapsed) => {
 });
 
 onBeforeUnmount(() => {
+  cancelDetailPending();
   const map = mapInstance.value;
   if (map && dvfLayer.value) {
     map.removeLayer(dvfLayer.value);
@@ -492,5 +560,9 @@ body,
 
 :global(.leaflet-popup-content .dvf-popup) {
   line-height: 1.4;
+}
+
+:global(.leaflet-popup-content .dvf-popup-clickable) {
+  cursor: pointer;
 }
 </style>

@@ -6,6 +6,7 @@ export type DvfPopupProperties = {
   valeur_fonciere: string;
   type_local: string;
   surface_reelle_bati: number | null;
+  nombre_pieces_principales: number | null;
   code_postal: string;
   nom_commune: string;
   adresse_numero: string;
@@ -34,6 +35,14 @@ function formatSurface(surface: number | null): string {
   return `${surface} m²`;
 }
 
+function formatRooms(rooms: number | null): string {
+  if (rooms == null) {
+    return "—";
+  }
+
+  return String(rooms);
+}
+
 export function buildDvfPopupContent(properties: DvfPopupProperties): string {
   const lines = [
     `<strong>${formatPropertyPrice(properties.valeur_fonciere)}</strong>`,
@@ -42,6 +51,7 @@ export function buildDvfPopupContent(properties: DvfPopupProperties): string {
     formatAddress(properties),
     `${properties.code_postal} ${properties.nom_commune}`,
     `Surface: ${formatSurface(properties.surface_reelle_bati)}`,
+    `Pièces: ${formatRooms(properties.nombre_pieces_principales)}`,
   ];
 
   return `<div class="dvf-popup">${lines.join("<br>")}</div>`;

@@ -9,6 +9,7 @@ describe("buildDvfPopupContent", () => {
       valeur_fonciere: "185000",
       type_local: "Maison",
       surface_reelle_bati: 97,
+      nombre_pieces_principales: 5,
       code_postal: "01370",
       nom_commune: "Val-Revermont",
       adresse_numero: "5080",
@@ -19,6 +20,7 @@ describe("buildDvfPopupContent", () => {
     assert.match(html, /<strong>185 000 €<\/strong>/);
     assert.match(html, /5 janvier 2021/);
     assert.match(html, /5080 CHE DE VOGELAS/);
+    assert.match(html, /Pièces: 5/);
     assert.match(html, /class="dvf-popup"/);
   });
 });

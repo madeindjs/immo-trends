@@ -4,7 +4,11 @@ import {
   createSampleDb,
   removeSampleDb,
 } from "../../test-data/setup-test-db.ts";
-import { isDbAvailable, queryDvfInBounds } from "../utils/dvf-db.ts";
+import {
+  isDbAvailable,
+  queryDvfByRowid,
+  queryDvfInBounds,
+} from "../utils/dvf-db.ts";
 import { parseDvfQuery } from "../utils/dvf-query.ts";
 
 describe("parseDvfQuery", () => {
@@ -199,6 +203,8 @@ describe("queryDvfInBounds", () => {
     );
 
     assert.ok(result.points.length >= 2);
+    assert.ok(typeof result.points[0]?.rowid === "number");
+    assert.ok(result.points[0]!.rowid > 0);
     assert.strictEqual(result.points[0]?.nom_commune, "Val-Revermont");
     assert.strictEqual(result.points[0]?.adresse_numero, "5080");
   });

@@ -1,6 +1,17 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { formatMutationDate } from "./format-date.ts";
+import { formatMutationDate, formatTrendMonthLabel } from "./format-date.ts";
+
+describe("formatTrendMonthLabel", () => {
+  it("formats YYYY-MM months with Intl in French", () => {
+    assert.match(formatTrendMonthLabel("2021-01"), /janv.*2021/i);
+  });
+
+  it("returns a fallback for invalid months", () => {
+    assert.strictEqual(formatTrendMonthLabel("invalid"), "invalid");
+    assert.strictEqual(formatTrendMonthLabel(null), "—");
+  });
+});
 
 describe("formatMutationDate", () => {
   it("formats ISO dates with Intl in French", () => {

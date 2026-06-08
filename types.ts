@@ -92,9 +92,9 @@ export type DvfMapStats = {
   maxPricePerSqm: number | null;
 };
 
-/** Yearly price-per-m² trend point for the map trends API. */
+/** Monthly price-per-m² trend point for the map trends API (month in YYYY-MM). */
 export type DvfPriceTrendPoint = {
-  year: number;
+  month: string;
   medianPricePerSqm: number | null;
   count: number;
 };
@@ -103,13 +103,22 @@ export type DvfTrendsResponse = {
   trends: DvfPriceTrendPoint[];
 };
 
+/** Full DVF row returned by the detail API (nullable fields from SQLite). */
+export type DvfRowDetail = {
+  rowid: number;
+} & {
+  [K in keyof DvfRow]: DvfRow[K] | null;
+};
+
 /** Lightweight DVF point returned by the map API. */
 export type DvfMapPoint = {
+  rowid: number;
   id_mutation: string;
   date_mutation: string;
   valeur_fonciere: string;
   type_local: string;
   surface_reelle_bati: number | null;
+  nombre_pieces_principales: number | null;
   code_postal: string;
   nom_commune: string;
   adresse_numero: string;

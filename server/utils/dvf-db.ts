@@ -6,6 +6,7 @@ import type {
   DvfMapPoint,
   DvfMapStats,
   DvfPriceTrendPoint,
+  DvfRowDetail,
 } from "../../types.ts";
 
 export type DvfBounds = {
@@ -38,11 +39,13 @@ const EMPTY_STATS: DvfMapStats = {
 };
 
 type DvfMapPointRow = {
+  rowid: number;
   id_mutation: string;
   date_mutation: string;
   valeur_fonciere: string;
   type_local: string;
   surface_reelle_bati: number | null;
+  nombre_pieces_principales: number | null;
   code_postal: string;
   nom_commune: string;
   adresse_numero: string;
@@ -170,7 +173,7 @@ export function isDbAvailable(dbPath: string = defaultDbPath): boolean {
 }
 
 type DvfTrendPriceRow = {
-  year: string;
+  month: string;
   price_per_sqm: number;
 };
 
@@ -188,7 +191,7 @@ export function queryDvfPriceTrends(
 
     const pricesSql = `
       SELECT
-        strftime('%Y', date_mutation) AS year,
+        strftime('%Y-%m', date_mutation) AS month,
         CAST(valeur_fonciere AS REAL) / surface_reelle_bati AS price_per_sqm
       FROM dvf
       WHERE ${conditions.join(" AND ")}
@@ -196,27 +199,27 @@ export function queryDvfPriceTrends(
     `;
 
     const priceRows = db.prepare(pricesSql).all(...params) as DvfTrendPriceRow[];
-    const pricesByYear = new Map<string, number[]>();
+    const pricesByMonth = new Map<string, number[]>();
 
     for (const row of priceRows) {
-      if (row.year == null || row.price_per_sqm == null) {
+      if (row.month == null || row.price_per_sqm == null) {
         continue;
       }
 
-      const prices = pricesByYear.get(row.year) ?? [];
+      const prices = pricesByMonth.get(row.month) ?? [];
       prices.push(row.price_per_sqm);
-      pricesByYear.set(row.year, prices);
+      pricesByMonth.set(row.month, prices);
     }
 
-    return [...pricesByYear.entries()]
-      .sort(([yearA], [yearB]) => yearA.localeCompare(yearB))
-      .map(([year, rawPrices]) => {
+    return [...pricesByMonth.entries()]
+      .sort(([monthA], [monthB]) => monthA.localeCompare(monthB))
+      .map(([month, rawPrices]) => {
         const prices = rawPrices.filter(
           (price): price is number => price != null && Number.isFinite(price),
         );
 
         return {
-          year: Number(year),
+          month,
           medianPricePerSqm: prices.length > 0 ? getMedian(prices) : null,
           count: prices.length,
         };
@@ -240,11 +243,13 @@ export function queryDvfInBounds(
     const pointParams = [...params, filters.limit];
     const sql = `
       SELECT
+        rowid,
         id_mutation,
         date_mutation,
         valeur_fonciere,
         type_local,
         surface_reelle_bati,
+        nombre_pieces_principales,
         code_postal,
         nom_commune,
         adresse_numero,
@@ -264,6 +269,23 @@ export function queryDvfInBounds(
       truncated: rows.length === filters.limit,
       stats,
     };
+  } finally {
+    db.close();
+  }
+}
+
+export function queryDvfByRowid(
+  rowid: number,
+  dbPath: string = defaultDbPath,
+): DvfRowDetail | null {
+  const db = new DatabaseSync(dbPath);
+
+  try {
+    const row = db
+      .prepare("SELECT rowid, * FROM dvf WHERE rowid = ?")
+      .get(rowid) as DvfRowDetail | undefined;
+
+    return row ?? null;
   } finally {
     db.close();
   }

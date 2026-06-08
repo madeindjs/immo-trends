@@ -100,6 +100,7 @@ import {
   type ChartConfiguration,
 } from "chart.js";
 import type { DvfMapStats, DvfPriceTrendPoint } from "../../types.ts";
+import { formatTrendMonthLabel } from "../utils/format-date.ts";
 import { formatPricePerSqm } from "../utils/format-price.ts";
 
 Chart.register(
@@ -125,7 +126,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  hoverYear: [year: number | null];
+  hoverMonth: [month: string | null];
 }>();
 
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
@@ -160,7 +161,7 @@ const statusMessage = computed((): string | null => {
 });
 
 function buildChartConfig(): ChartConfiguration<"line"> {
-  const labels = props.trends.map((point) => String(point.year));
+  const labels = props.trends.map((point) => formatTrendMonthLabel(point.month));
 
   return {
     type: "line",
@@ -182,13 +183,14 @@ function buildChartConfig(): ChartConfiguration<"line"> {
       maintainAspectRatio: false,
       onHover(_event, elements) {
         if (elements.length === 0) {
-          emit("hoverYear", null);
+          emit("hoverMonth", null);
           return;
         }
 
         const index = elements[0]?.index;
-        const year = index == null ? null : (props.trends[index]?.year ?? null);
-        emit("hoverYear", year);
+        const month =
+          index == null ? null : (props.trends[index]?.month ?? null);
+        emit("hoverMonth", month);
       },
       interaction: {
         mode: "index",
@@ -215,7 +217,13 @@ function buildChartConfig(): ChartConfiguration<"line"> {
         x: {
           title: {
             display: true,
-            text: "Année",
+            text: "Mois",
+          },
+          ticks: {
+            maxRotation: 45,
+            minRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 24,
           },
         },
         y: {
@@ -236,7 +244,7 @@ function buildChartConfig(): ChartConfiguration<"line"> {
 
 function destroyChart(): void {
   if (chart) {
-    emit("hoverYear", null);
+    emit("hoverMonth", null);
     chart.destroy();
     chart = null;
   }

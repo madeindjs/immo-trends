@@ -64,7 +64,7 @@ describe("queryDvfPriceTrends", () => {
     removeSampleDb(dbPath);
   });
 
-  it("returns yearly median price per sqm", () => {
+  it("returns monthly median price per sqm", () => {
     const trends = queryDvfPriceTrends(
       {
         north: 47.0,
@@ -77,7 +77,7 @@ describe("queryDvfPriceTrends", () => {
     );
 
     assert.ok(trends.length > 0);
-    assert.ok(trends.every((point) => Number.isInteger(point.year)));
+    assert.ok(trends.every((point) => /^\d{4}-\d{2}$/.test(point.month)));
     assert.ok(
       trends.every(
         (point) => point.medianPricePerSqm !== null && point.count > 0,
@@ -110,10 +110,11 @@ describe("queryDvfPriceTrends", () => {
     );
 
     assert.ok(filtered.length > 0);
-    assert.strictEqual(filtered[0]?.year, 2021);
+    assert.ok(filtered.every((point) => point.month.startsWith("2021-")));
     assert.notStrictEqual(
       filtered[0]?.medianPricePerSqm,
-      unfiltered.find((point) => point.year === 2021)?.medianPricePerSqm,
+      unfiltered.find((point) => point.month === filtered[0]?.month)
+        ?.medianPricePerSqm,
     );
   });
 
@@ -164,7 +165,7 @@ describe("queryDvfPriceTrends", () => {
     assert.ok(filtered.length > 0);
     assert.notStrictEqual(
       filtered[0]?.count,
-      unfiltered.find((point) => point.year === 2021)?.count,
+      unfiltered.find((point) => point.month === filtered[0]?.month)?.count,
     );
   });
 });
