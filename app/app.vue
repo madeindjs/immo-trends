@@ -87,18 +87,16 @@ import { pricePerSqmToColor } from "./utils/dvf-color.ts";
 import type { DvfMapPoint } from "../types.ts";
 import { calculatePricePerSqm } from "../scripts/draw.utils.ts";
 import type { DvfPointFilters } from "./composables/useDvfPoints.ts";
+import {
+  DEFAULT_CENTER,
+  DEFAULT_ZOOM,
+  getDefaultFilters,
+  normalizeCenter,
+} from "./utils/url-state.ts";
 
 type LeafletModule = typeof import("leaflet/dist/leaflet-src.esm");
 
-const STORAGE_KEY = "immo-trends.map";
 const STATS_PANEL_STORAGE_KEY = "immo-trends.stats-panel-collapsed";
-const DEFAULT_ZOOM = 6;
-const DEFAULT_CENTER: [number, number] = [46.6, 2.4];
-
-type MapViewState = {
-  zoom: number;
-  center: [number, number];
-};
 
 type DvfFeatureProperties = {
   id_mutation: string;
@@ -110,35 +108,6 @@ type DvfFeatureProperties = {
   nom_commune: string;
   adresse_nom_voie: string;
 };
-
-function loadMapView(): MapViewState {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return { zoom: DEFAULT_ZOOM, center: DEFAULT_CENTER };
-    }
-
-    const parsed = JSON.parse(raw) as Partial<MapViewState>;
-    const lat = parsed.center?.[0];
-    const lng = parsed.center?.[1];
-
-    if (
-      typeof parsed.zoom === "number" &&
-      typeof lat === "number" &&
-      typeof lng === "number"
-    ) {
-      return { zoom: parsed.zoom, center: [lat, lng] };
-    }
-  } catch {
-    // ignore invalid stored state
-  }
-
-  return { zoom: DEFAULT_ZOOM, center: DEFAULT_CENTER };
-}
-
-function saveMapView(state: MapViewState): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
 
 function formatPrice(value: string): string {
   const amount = Number(value);
@@ -212,17 +181,38 @@ const {
   scheduleFetch: scheduleTrendsFetch,
 } = useDvfTrends();
 
-const filters = ref<DvfPointFilters>({
-  typeLocals: ["Appartement", "Maison"],
-  yearMin: 2014,
-  yearMax: new Date().getFullYear(),
-  surfaceMin: null,
-  surfaceMax: null,
-  pricePerSqmMin: null,
-  pricePerSqmMax: null,
-});
+const filters = ref<DvfPointFilters>(getDefaultFilters());
 const statsPanelCollapsed = ref(loadStatsPanelCollapsed());
 const hoveredTrendYear = ref<number | null>(null);
+const { initializeFromUrl, pushMapState } = useAppUrlState(
+  {
+    zoom,
+    center,
+    filters,
+  },
+  {
+    getMapViewState: () => {
+      const map = mapInstance.value;
+      if (map) {
+        const { lat, lng } = map.getCenter();
+        return {
+          zoom: map.getZoom(),
+          center: [lat, lng] as [number, number],
+        };
+      }
+
+      return {
+        zoom: zoom.value,
+        center: normalizeCenter(center.value),
+      };
+    },
+    onAppliedFromUrl: () => {
+      if (mapInstance.value) {
+        refreshData();
+      }
+    },
+  },
+);
 
 function loadStatsPanelCollapsed(): boolean {
   try {
@@ -441,9 +431,7 @@ onBeforeUnmount(() => {
 });
 
 onMounted(() => {
-  const saved = loadMapView();
-  zoom.value = saved.zoom;
-  center.value = saved.center;
+  initializeFromUrl();
   mapReady.value = true;
 });
 
@@ -452,10 +440,9 @@ function onMapReady(map: Map): void {
 
   const handleViewportChange = () => {
     const { lat, lng } = map.getCenter();
-    saveMapView({
-      zoom: map.getZoom(),
-      center: [lat, lng],
-    });
+    zoom.value = map.getZoom();
+    center.value = [lat, lng];
+    pushMapState();
     refreshData();
   };
 

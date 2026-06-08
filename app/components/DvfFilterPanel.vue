@@ -140,9 +140,34 @@ const surfaceMax = ref(filters.value.surfaceMax);
 const pricePerSqmMin = ref(filters.value.pricePerSqmMin);
 const pricePerSqmMax = ref(filters.value.pricePerSqmMax);
 
-function normalizeOptionalNumber(value: number): number | null {
-  return Number.isFinite(value) ? value : null;
+let isSyncingFromModel = false;
+
+function normalizeOptionalNumber(value: number | null): number | null {
+  return value != null && Number.isFinite(value) ? value : null;
 }
+
+function syncPanelFromModel(nextFilters: DvfPointFilters): void {
+  isSyncingFromModel = true;
+  showAppartement.value = nextFilters.typeLocals.includes("Appartement");
+  showMaison.value = nextFilters.typeLocals.includes("Maison");
+  yearMin.value = nextFilters.yearMin;
+  yearMax.value = nextFilters.yearMax;
+  surfaceMin.value = nextFilters.surfaceMin;
+  surfaceMax.value = nextFilters.surfaceMax;
+  pricePerSqmMin.value = nextFilters.pricePerSqmMin;
+  pricePerSqmMax.value = nextFilters.pricePerSqmMax;
+  nextTick(() => {
+    isSyncingFromModel = false;
+  });
+}
+
+watch(
+  () => filters.value,
+  (nextFilters) => {
+    syncPanelFromModel(nextFilters);
+  },
+  { deep: true },
+);
 
 watch(
   [
@@ -156,6 +181,10 @@ watch(
     pricePerSqmMax,
   ],
   () => {
+    if (isSyncingFromModel) {
+      return;
+    }
+
     const typeLocals: string[] = [];
     if (showAppartement.value) {
       typeLocals.push("Appartement");
