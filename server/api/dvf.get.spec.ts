@@ -121,6 +121,71 @@ describe("queryDvfInBounds", () => {
     assert.strictEqual(result.points[0]?.nom_commune, "Val-Revermont");
   });
 
+  it("returns price-per-sqm stats for the bounding box", () => {
+    const result = queryDvfInBounds(
+      {
+        north: 47.0,
+        south: 46.0,
+        east: 6.0,
+        west: 4.0,
+      },
+      { limit: 2000 },
+      dbPath,
+    );
+
+    assert.ok(result.stats.averagePricePerSqm !== null);
+    assert.ok(result.stats.averagePricePerSqm! > 0);
+    assert.ok(result.stats.minPricePerSqm! <= result.stats.averagePricePerSqm!);
+    assert.ok(result.stats.averagePricePerSqm! <= result.stats.maxPricePerSqm!);
+  });
+
+  it("filters stats by type_local and year", () => {
+    const unfiltered = queryDvfInBounds(
+      {
+        north: 47.0,
+        south: 46.0,
+        east: 6.0,
+        west: 4.0,
+      },
+      { limit: 2000 },
+      dbPath,
+    );
+
+    const filtered = queryDvfInBounds(
+      {
+        north: 47.0,
+        south: 46.0,
+        east: 6.0,
+        west: 4.0,
+      },
+      { limit: 2000, typeLocal: "Maison", year: "2021" },
+      dbPath,
+    );
+
+    assert.ok(filtered.stats.averagePricePerSqm !== null);
+    assert.notStrictEqual(
+      filtered.stats.averagePricePerSqm,
+      unfiltered.stats.averagePricePerSqm,
+    );
+  });
+
+  it("returns null stats when no rows have valid surface", () => {
+    const result = queryDvfInBounds(
+      {
+        north: 46.225,
+        south: 46.223,
+        east: 4.845,
+        west: 4.843,
+      },
+      { limit: 2000, typeLocal: "Dépendance", year: "2021" },
+      dbPath,
+    );
+
+    assert.strictEqual(result.stats.averagePricePerSqm, null);
+    assert.strictEqual(result.stats.minPricePerSqm, null);
+    assert.strictEqual(result.stats.maxPricePerSqm, null);
+  });
+
   it("filters by type_local and year", () => {
     const result = queryDvfInBounds(
       {

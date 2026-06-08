@@ -85,6 +85,13 @@ export interface DvfRow {
   latitude: number;
 }
 
+/** Price-per-m² statistics for the current map bounding box. */
+export type DvfMapStats = {
+  averagePricePerSqm: number | null;
+  minPricePerSqm: number | null;
+  maxPricePerSqm: number | null;
+};
+
 /** Lightweight DVF point returned by the map API. */
 export type DvfMapPoint = {
   id_mutation: string;

@@ -1,5 +1,5 @@
 import type { LatLngBounds } from "leaflet";
-import type { DvfMapPoint } from "../../types.ts";
+import type { DvfMapPoint, DvfMapStats } from "../../types.ts";
 
 export const MIN_FETCH_ZOOM = 10;
 const DEBOUNCE_MS = 300;
@@ -7,6 +7,13 @@ const DEBOUNCE_MS = 300;
 type DvfApiResponse = {
   points: DvfMapPoint[];
   truncated: boolean;
+  stats: DvfMapStats;
+};
+
+const EMPTY_STATS: DvfMapStats = {
+  averagePricePerSqm: null,
+  minPricePerSqm: null,
+  maxPricePerSqm: null,
 };
 
 type DvfFilters = {
@@ -25,6 +32,7 @@ function isAbortError(error: unknown): boolean {
 
 export function useDvfPoints(filters: DvfFilters = {}) {
   const points = ref<DvfMapPoint[]>([]);
+  const stats = ref<DvfMapStats>({ ...EMPTY_STATS });
   const loading = ref(false);
   const error = ref<string | null>(null);
   const truncated = ref(false);
@@ -48,6 +56,7 @@ export function useDvfPoints(filters: DvfFilters = {}) {
 
     if (zoom < MIN_FETCH_ZOOM) {
       points.value = [];
+      stats.value = { ...EMPTY_STATS };
       truncated.value = false;
       error.value = null;
       return;
@@ -76,6 +85,7 @@ export function useDvfPoints(filters: DvfFilters = {}) {
       }
 
       points.value = response.points;
+      stats.value = response.stats;
       truncated.value = response.truncated;
     } catch (fetchError) {
       if (controller.signal.aborted || isAbortError(fetchError)) {
@@ -83,6 +93,7 @@ export function useDvfPoints(filters: DvfFilters = {}) {
       }
 
       points.value = [];
+      stats.value = { ...EMPTY_STATS };
       truncated.value = false;
       error.value =
         fetchError instanceof Error
@@ -107,6 +118,7 @@ export function useDvfPoints(filters: DvfFilters = {}) {
 
   return {
     points,
+    stats,
     loading,
     error,
     truncated,

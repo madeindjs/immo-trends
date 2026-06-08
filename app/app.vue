@@ -32,7 +32,9 @@
 import type { Feature, FeatureCollection, Point } from "geojson";
 import type { GeoJSON, Map } from "leaflet";
 import { MIN_FETCH_ZOOM } from "./composables/useDvfPoints.ts";
+import { pricePerSqmToColor } from "./utils/dvf-color.ts";
 import type { DvfMapPoint } from "../types.ts";
+import { calculatePricePerSqm } from "../scripts/draw.utils.ts";
 
 type LeafletModule = typeof import("leaflet/dist/leaflet-src.esm");
 
@@ -141,7 +143,7 @@ const mapInstance = shallowRef<Map | null>(null);
 const leafletModule = shallowRef<LeafletModule | null>(null);
 const dvfLayer = shallowRef<GeoJSON | null>(null);
 
-const { points, loading, error, truncated, cancelPending, scheduleFetch } =
+const { points, stats, loading, error, truncated, cancelPending, scheduleFetch } =
   useDvfPoints();
 
 function buildFeatureCollection(): FeatureCollection<
@@ -180,12 +182,19 @@ async function renderPoints(): Promise<void> {
   }
 
   dvfLayer.value = L.geoJSON(buildFeatureCollection(), {
-    pointToLayer(_feature, latlng) {
+    pointToLayer(feature, latlng) {
+      const properties = feature.properties as DvfFeatureProperties;
+      const pricePerSqm = calculatePricePerSqm(
+        properties.valeur_fonciere,
+        properties.surface_reelle_bati,
+      );
+      const { fillColor, color } = pricePerSqmToColor(pricePerSqm, stats.value);
+
       return L.circleMarker(latlng, {
         radius: 5,
-        color: "#1d4ed8",
+        color,
         weight: 1,
-        fillColor: "#3b82f6",
+        fillColor,
         fillOpacity: 0.8,
       });
     },
@@ -257,7 +266,7 @@ function refreshPoints(): void {
   scheduleFetch(map.getBounds(), map.getZoom());
 }
 
-watch(points, () => {
+watch([points, stats], () => {
   void renderPoints();
 });
 

@@ -34,11 +34,18 @@ Returns DVF transaction points for the current map bounding box.
       "longitude": 5.386107
     }
   ],
-  "truncated": false
+  "truncated": false,
+  "stats": {
+    "averagePricePerSqm": 2150.5,
+    "minPricePerSqm": 1200,
+    "maxPricePerSqm": 3800
+  }
 }
 ```
 
 `truncated` is `true` when the number of returned points equals the requested `limit`, meaning more transactions may exist in the bounding box.
+
+`stats` contains price-per-m² statistics (`valeur_fonciere / surface_reelle_bati`) computed over **all** matching transactions in the bounding box (not only the returned `points`). Rows without a valid built surface or price are excluded. All three fields are `null` when no qualifying rows exist.
 
 ### Errors
 
