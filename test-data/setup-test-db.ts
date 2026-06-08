@@ -21,8 +21,9 @@ export function createSampleDb(): string {
   db.exec(schema);
   db.close();
 
+  const indexesPath = path.join(rootDir, "indexes.sql");
   execSync(
-    `sqlite3 "${dbPath}" ".mode csv" ".import ${csvPath} dvf" "DELETE FROM dvf WHERE type_local IS NULL;"`,
+    `sqlite3 "${dbPath}" ".mode csv" ".import ${csvPath} dvf" "DELETE FROM dvf WHERE type_local IS NULL;" ".read ${indexesPath}"`,
     { stdio: "pipe" },
   );
 

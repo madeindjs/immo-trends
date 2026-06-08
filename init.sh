@@ -65,5 +65,5 @@ download_dvf
 # Unzip it
 gunzip -f -k "$DVF_ARCHIVE"
 
-# Import into SQLite
+# Import into SQLite and build map query indexes
 sqlite3 dvf.sqlite3 < init.sql

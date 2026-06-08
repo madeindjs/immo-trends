@@ -71,13 +71,13 @@ function buildWhereClause(
   }
 
   if (filters.yearMin) {
-    conditions.push("strftime('%Y', date_mutation) >= ?");
-    params.push(filters.yearMin);
+    conditions.push("date_mutation >= ?");
+    params.push(`${filters.yearMin}-01-01`);
   }
 
   if (filters.yearMax) {
-    conditions.push("strftime('%Y', date_mutation) <= ?");
-    params.push(filters.yearMax);
+    conditions.push("date_mutation <= ?");
+    params.push(`${filters.yearMax}-12-31`);
   }
 
   return { conditions, params };

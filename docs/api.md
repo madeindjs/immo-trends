@@ -13,8 +13,10 @@ Returns DVF transaction points for the current map bounding box.
 | `east` | yes | Eastern longitude bound (WGS-84) |
 | `west` | yes | Western longitude bound (WGS-84) |
 | `limit` | no | Maximum number of points to return. Default: `2000`. Max: `5000`. |
-| `type_local` | no | Filter by property type, e.g. `Appartement`, `Maison` |
-| `year` | no | Filter by mutation year (`YYYY`) |
+| `type_local` | no | Filter by property type. Repeat or comma-separate values, e.g. `Maison`, `Appartement` |
+| `year` | no | Filter by mutation year (`YYYY`). Sets both `year_min` and `year_max` |
+| `year_min` | no | Earliest mutation year (`YYYY`) |
+| `year_max` | no | Latest mutation year (`YYYY`) |
 
 ### Response
 

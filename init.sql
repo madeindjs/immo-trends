@@ -46,3 +46,5 @@ CREATE TABLE "dvf"(
 .import -skip 1 -csv data/dvf.csv dvf
 
 DELETE FROM dvf WHERE type_local IS NULL;
+
+.read indexes.sql

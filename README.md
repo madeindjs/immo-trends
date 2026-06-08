@@ -54,7 +54,11 @@ npm run generate  # génération statique
 
 ## Base de données
 
-Le schéma de la base de données SQLite (`dvf.sqlite3`) est défini dans le fichier `init.sql`.
+Le schéma de la base de données SQLite (`dvf.sqlite3`) est défini dans le fichier `init.sql`. Les index de la carte sont créés automatiquement à l'import (`indexes.sql`). Pour une base existante :
+
+```sh
+sqlite3 dvf.sqlite3 < indexes.sql
+```
 
 ## Nettoyage
 
