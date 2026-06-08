@@ -23,8 +23,9 @@ describe("parseDvfQuery", () => {
       west: 5.0,
     });
     assert.strictEqual(result.filters.limit, 2000);
-    assert.strictEqual(result.filters.typeLocal, undefined);
-    assert.strictEqual(result.filters.year, undefined);
+    assert.strictEqual(result.filters.typeLocals, undefined);
+    assert.strictEqual(result.filters.yearMin, undefined);
+    assert.strictEqual(result.filters.yearMax, undefined);
   });
 
   it("parses optional filters", () => {
@@ -38,8 +39,9 @@ describe("parseDvfQuery", () => {
       limit: "10",
     });
 
-    assert.strictEqual(result.filters.typeLocal, "Maison");
-    assert.strictEqual(result.filters.year, "2021");
+    assert.deepStrictEqual(result.filters.typeLocals, ["Maison"]);
+    assert.strictEqual(result.filters.yearMin, "2021");
+    assert.strictEqual(result.filters.yearMax, "2021");
     assert.strictEqual(result.filters.limit, 10);
   });
 
@@ -90,6 +92,37 @@ describe("parseDvfQuery", () => {
           year: "21",
         }),
       /Invalid year parameter/,
+    );
+  });
+
+  it("parses multiple type_local values and year range", () => {
+    const result = parseDvfQuery({
+      north: "46.5",
+      south: "46.2",
+      east: "5.5",
+      west: "5.0",
+      type_local: ["Maison", "Appartement"],
+      year_min: "2020",
+      year_max: "2022",
+    });
+
+    assert.deepStrictEqual(result.filters.typeLocals, ["Maison", "Appartement"]);
+    assert.strictEqual(result.filters.yearMin, "2020");
+    assert.strictEqual(result.filters.yearMax, "2022");
+  });
+
+  it("rejects inverted year range", () => {
+    assert.throws(
+      () =>
+        parseDvfQuery({
+          north: "46.5",
+          south: "46.2",
+          east: "5.5",
+          west: "5.0",
+          year_min: "2022",
+          year_max: "2020",
+        }),
+      /year_min must be less than or equal to year_max/,
     );
   });
 });
@@ -158,7 +191,7 @@ describe("queryDvfInBounds", () => {
         east: 6.0,
         west: 4.0,
       },
-      { limit: 2000, typeLocal: "Maison", year: "2021" },
+      { limit: 2000, typeLocals: ["Maison"], yearMin: "2021", yearMax: "2021" },
       dbPath,
     );
 
@@ -177,7 +210,7 @@ describe("queryDvfInBounds", () => {
         east: 4.845,
         west: 4.843,
       },
-      { limit: 2000, typeLocal: "Dépendance", year: "2021" },
+      { limit: 2000, typeLocals: ["Dépendance"], yearMin: "2021", yearMax: "2021" },
       dbPath,
     );
 
@@ -194,13 +227,31 @@ describe("queryDvfInBounds", () => {
         east: 5.5,
         west: 5.0,
       },
-      { limit: 2000, typeLocal: "Maison", year: "2021" },
+      { limit: 2000, typeLocals: ["Maison"], yearMin: "2021", yearMax: "2021" },
       dbPath,
     );
 
     assert.ok(result.points.length > 0);
     assert.ok(result.points.every((point) => point.type_local === "Maison"));
     assert.ok(result.points.every((point) => point.date_mutation.startsWith("2021")));
+  });
+
+  it("filters by year range", () => {
+    const result = queryDvfInBounds(
+      {
+        north: 46.5,
+        south: 46.2,
+        east: 5.5,
+        west: 5.0,
+      },
+      { limit: 2000, yearMin: "2021", yearMax: "2021" },
+      dbPath,
+    );
+
+    assert.ok(result.points.length > 0);
+    assert.ok(
+      result.points.every((point) => point.date_mutation.startsWith("2021")),
+    );
   });
 
   it("marks truncated results when limit is reached", () => {

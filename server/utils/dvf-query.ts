@@ -13,6 +13,8 @@ export type DvfQueryParams = {
   limit?: string | string[] | undefined;
   type_local?: string | string[] | undefined;
   year?: string | string[] | undefined;
+  year_min?: string | string[] | undefined;
+  year_max?: string | string[] | undefined;
 };
 
 function firstValue(value: string | string[] | undefined): string | undefined {
@@ -20,6 +22,18 @@ function firstValue(value: string | string[] | undefined): string | undefined {
     return value[0];
   }
   return value;
+}
+
+function allValues(value: string | string[] | undefined): string[] {
+  if (value === undefined) {
+    return [];
+  }
+
+  const rawValues = Array.isArray(value) ? value : [value];
+  return rawValues
+    .flatMap((entry) => entry.split(","))
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
 }
 
 function parseRequiredNumber(
@@ -56,6 +70,7 @@ function parseOptionalLimit(
 }
 
 function parseOptionalYear(
+  name: string,
   value: string | string[] | undefined,
 ): string | undefined {
   const raw = firstValue(value);
@@ -64,21 +79,21 @@ function parseOptionalYear(
   }
 
   if (!/^\d{4}$/.test(raw)) {
-    throw new Error("Invalid year parameter: expected 4-digit year");
+    throw new Error(`Invalid year parameter: ${name}`);
   }
 
   return raw;
 }
 
-function parseOptionalTypeLocal(
+function parseOptionalTypeLocals(
   value: string | string[] | undefined,
-): string | undefined {
-  const raw = firstValue(value);
-  if (raw === undefined || raw === "") {
+): string[] | undefined {
+  const parsed = allValues(value);
+  if (parsed.length === 0) {
     return undefined;
   }
 
-  return raw;
+  return parsed;
 }
 
 export function parseDvfQuery(
@@ -97,12 +112,21 @@ export function parseDvfQuery(
     throw new Error("Invalid bounds: west must be less than or equal to east");
   }
 
+  const year = parseOptionalYear("year", query.year);
+  const yearMin = parseOptionalYear("year_min", query.year_min) ?? year;
+  const yearMax = parseOptionalYear("year_max", query.year_max) ?? year;
+
+  if (yearMin && yearMax && yearMin > yearMax) {
+    throw new Error("Invalid year range: year_min must be less than or equal to year_max");
+  }
+
   return {
     bounds: { north, south, east, west },
     filters: {
       limit: parseOptionalLimit(query.limit),
-      typeLocal: parseOptionalTypeLocal(query.type_local),
-      year: parseOptionalYear(query.year),
+      typeLocals: parseOptionalTypeLocals(query.type_local),
+      yearMin,
+      yearMax,
     },
   };
 }

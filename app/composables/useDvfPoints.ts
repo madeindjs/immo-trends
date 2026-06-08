@@ -16,9 +16,10 @@ const EMPTY_STATS: DvfMapStats = {
   maxPricePerSqm: null,
 };
 
-type DvfFilters = {
-  typeLocal?: string;
-  year?: string;
+export type DvfPointFilters = {
+  typeLocals: string[];
+  yearMin: number;
+  yearMax: number;
 };
 
 function isAbortError(error: unknown): boolean {
@@ -30,7 +31,27 @@ function isAbortError(error: unknown): boolean {
   return cause instanceof DOMException && cause.name === "AbortError";
 }
 
-export function useDvfPoints(filters: DvfFilters = {}) {
+function buildQueryParams(
+  bounds: LatLngBounds,
+  filters: DvfPointFilters,
+): Record<string, string | number | string[]> {
+  const query: Record<string, string | number | string[]> = {
+    north: bounds.getNorth(),
+    south: bounds.getSouth(),
+    east: bounds.getEast(),
+    west: bounds.getWest(),
+    year_min: String(filters.yearMin),
+    year_max: String(filters.yearMax),
+  };
+
+  if (filters.typeLocals.length > 0) {
+    query.type_local = filters.typeLocals;
+  }
+
+  return query;
+}
+
+export function useDvfPoints() {
   const points = ref<DvfMapPoint[]>([]);
   const stats = ref<DvfMapStats>({ ...EMPTY_STATS });
   const loading = ref(false);
@@ -51,10 +72,22 @@ export function useDvfPoints(filters: DvfFilters = {}) {
     loading.value = false;
   }
 
-  async function fetchForBounds(bounds: LatLngBounds, zoom: number): Promise<void> {
+  async function fetchForBounds(
+    bounds: LatLngBounds,
+    zoom: number,
+    filters: DvfPointFilters,
+  ): Promise<void> {
     cancelPending();
 
     if (zoom < MIN_FETCH_ZOOM) {
+      points.value = [];
+      stats.value = { ...EMPTY_STATS };
+      truncated.value = false;
+      error.value = null;
+      return;
+    }
+
+    if (filters.typeLocals.length === 0) {
       points.value = [];
       stats.value = { ...EMPTY_STATS };
       truncated.value = false;
@@ -69,14 +102,7 @@ export function useDvfPoints(filters: DvfFilters = {}) {
 
     try {
       const response = await $fetch<DvfApiResponse>("/api/dvf", {
-        query: {
-          north: bounds.getNorth(),
-          south: bounds.getSouth(),
-          east: bounds.getEast(),
-          west: bounds.getWest(),
-          ...(filters.typeLocal ? { type_local: filters.typeLocal } : {}),
-          ...(filters.year ? { year: filters.year } : {}),
-        },
+        query: buildQueryParams(bounds, filters),
         signal: controller.signal,
       });
 
@@ -107,12 +133,16 @@ export function useDvfPoints(filters: DvfFilters = {}) {
     }
   }
 
-  function scheduleFetch(bounds: LatLngBounds, zoom: number): void {
+  function scheduleFetch(
+    bounds: LatLngBounds,
+    zoom: number,
+    filters: DvfPointFilters,
+  ): void {
     cancelPending();
 
     debounceTimer = setTimeout(() => {
       debounceTimer = undefined;
-      void fetchForBounds(bounds, zoom);
+      void fetchForBounds(bounds, zoom, filters);
     }, DEBOUNCE_MS);
   }
 

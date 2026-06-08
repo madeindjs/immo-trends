@@ -11,8 +11,9 @@ export type DvfBounds = {
 };
 
 export type DvfQueryFilters = {
-  typeLocal?: string;
-  year?: string;
+  typeLocals?: string[];
+  yearMin?: string;
+  yearMax?: string;
   limit: number;
 };
 
@@ -48,7 +49,7 @@ type DvfStatsRow = {
 
 function buildWhereClause(
   bounds: DvfBounds,
-  filters: Pick<DvfQueryFilters, "typeLocal" | "year">,
+  filters: Pick<DvfQueryFilters, "typeLocals" | "yearMin" | "yearMax">,
 ): { conditions: string[]; params: Array<string | number> } {
   const conditions = [
     "latitude BETWEEN ? AND ?",
@@ -63,14 +64,20 @@ function buildWhereClause(
     bounds.east,
   ];
 
-  if (filters.typeLocal) {
-    conditions.push("type_local = ?");
-    params.push(filters.typeLocal);
+  if (filters.typeLocals && filters.typeLocals.length > 0) {
+    const placeholders = filters.typeLocals.map(() => "?").join(", ");
+    conditions.push(`type_local IN (${placeholders})`);
+    params.push(...filters.typeLocals);
   }
 
-  if (filters.year) {
-    conditions.push("strftime('%Y', date_mutation) = ?");
-    params.push(filters.year);
+  if (filters.yearMin) {
+    conditions.push("strftime('%Y', date_mutation) >= ?");
+    params.push(filters.yearMin);
+  }
+
+  if (filters.yearMax) {
+    conditions.push("strftime('%Y', date_mutation) <= ?");
+    params.push(filters.yearMax);
   }
 
   return { conditions, params };
@@ -79,7 +86,7 @@ function buildWhereClause(
 function queryPricePerSqmStats(
   db: DatabaseSync,
   bounds: DvfBounds,
-  filters: Pick<DvfQueryFilters, "typeLocal" | "year">,
+  filters: Pick<DvfQueryFilters, "typeLocals" | "yearMin" | "yearMax">,
 ): DvfMapStats {
   const { conditions, params } = buildWhereClause(bounds, filters);
 

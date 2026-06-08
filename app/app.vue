@@ -1,6 +1,8 @@
 <template>
   <ClientOnly>
     <div v-if="mapReady" class="map">
+      <DvfFilterPanel v-model="filters" />
+
       <LMap
         v-model:zoom="zoom"
         v-model:center="center"
@@ -35,6 +37,7 @@ import { MIN_FETCH_ZOOM } from "./composables/useDvfPoints.ts";
 import { pricePerSqmToColor } from "./utils/dvf-color.ts";
 import type { DvfMapPoint } from "../types.ts";
 import { calculatePricePerSqm } from "../scripts/draw.utils.ts";
+import type { DvfPointFilters } from "./composables/useDvfPoints.ts";
 
 type LeafletModule = typeof import("leaflet/dist/leaflet-src.esm");
 
@@ -142,9 +145,21 @@ const center = ref<[number, number]>(DEFAULT_CENTER);
 const mapInstance = shallowRef<Map | null>(null);
 const leafletModule = shallowRef<LeafletModule | null>(null);
 const dvfLayer = shallowRef<GeoJSON | null>(null);
-
 const { points, stats, loading, error, truncated, cancelPending, scheduleFetch } =
   useDvfPoints();
+
+const filters = ref<DvfPointFilters>({
+  typeLocals: ["Appartement", "Maison"],
+  yearMin: 2014,
+  yearMax: new Date().getFullYear(),
+});
+
+function filtersAreValid(): boolean {
+  return (
+    filters.value.typeLocals.length > 0 &&
+    filters.value.yearMin <= filters.value.yearMax
+  );
+}
 
 function buildFeatureCollection(): FeatureCollection<
   Point,
@@ -230,6 +245,13 @@ const statusToast = computed((): StatusToast | null => {
     };
   }
 
+  if (!filtersAreValid()) {
+    return {
+      message: "Ajustez les filtres pour afficher les transactions DVF.",
+      alertClass: "alert-warning",
+    };
+  }
+
   if ((mapInstance.value?.getZoom() ?? zoom.value) < MIN_FETCH_ZOOM) {
     return {
       message: "Zoomez pour afficher les transactions DVF.",
@@ -263,12 +285,16 @@ function refreshPoints(): void {
     return;
   }
 
-  scheduleFetch(map.getBounds(), map.getZoom());
+  scheduleFetch(map.getBounds(), map.getZoom(), filters.value);
 }
 
 watch([points, stats], () => {
   void renderPoints();
 });
+
+watch(filters, () => {
+  refreshPoints();
+}, { deep: true });
 
 onBeforeUnmount(() => {
   const map = mapInstance.value;
