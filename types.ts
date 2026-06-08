@@ -87,7 +87,7 @@ export interface DvfRow {
 
 /** Price-per-m² statistics for the current map bounding box. */
 export type DvfMapStats = {
-  averagePricePerSqm: number | null;
+  medianPricePerSqm: number | null;
   minPricePerSqm: number | null;
   maxPricePerSqm: number | null;
 };
@@ -96,7 +96,6 @@ export type DvfMapStats = {
 export type DvfPriceTrendPoint = {
   year: number;
   medianPricePerSqm: number | null;
-  averagePricePerSqm: number | null;
   count: number;
 };
 

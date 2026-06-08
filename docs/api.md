@@ -38,7 +38,7 @@ Returns DVF transaction points for the current map bounding box.
   ],
   "truncated": false,
   "stats": {
-    "averagePricePerSqm": 2150.5,
+    "medianPricePerSqm": 2150.5,
     "minPricePerSqm": 1200,
     "maxPricePerSqm": 3800
   }
@@ -87,20 +87,18 @@ Returns yearly price-per-m² trends for the current map bounding box.
     {
       "year": 2020,
       "medianPricePerSqm": 3150,
-      "averagePricePerSqm": 3220.5,
       "count": 128
     },
     {
       "year": 2021,
       "medianPricePerSqm": 3280,
-      "averagePricePerSqm": 3345.2,
       "count": 142
     }
   ]
 }
 ```
 
-Each trend point aggregates all qualifying transactions for that year in the bounding box. Rows without a valid built surface or price are excluded. `medianPricePerSqm` and `averagePricePerSqm` are `null` when no qualifying prices exist for that year.
+Each trend point aggregates all qualifying transactions for that year in the bounding box. Rows without a valid built surface or price are excluded. `medianPricePerSqm` is `null` when no qualifying prices exist for that year.
 
 ### Errors
 

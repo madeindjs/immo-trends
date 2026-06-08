@@ -64,7 +64,7 @@ describe("queryDvfPriceTrends", () => {
     removeSampleDb(dbPath);
   });
 
-  it("returns yearly median and average price per sqm", () => {
+  it("returns yearly median price per sqm", () => {
     const trends = queryDvfPriceTrends(
       {
         north: 47.0,
@@ -80,10 +80,7 @@ describe("queryDvfPriceTrends", () => {
     assert.ok(trends.every((point) => Number.isInteger(point.year)));
     assert.ok(
       trends.every(
-        (point) =>
-          point.averagePricePerSqm !== null &&
-          point.medianPricePerSqm !== null &&
-          point.count > 0,
+        (point) => point.medianPricePerSqm !== null && point.count > 0,
       ),
     );
     assert.ok(trends.every((point) => point.medianPricePerSqm! > 0));
@@ -115,8 +112,8 @@ describe("queryDvfPriceTrends", () => {
     assert.ok(filtered.length > 0);
     assert.strictEqual(filtered[0]?.year, 2021);
     assert.notStrictEqual(
-      filtered[0]?.averagePricePerSqm,
-      unfiltered.find((point) => point.year === 2021)?.averagePricePerSqm,
+      filtered[0]?.medianPricePerSqm,
+      unfiltered.find((point) => point.year === 2021)?.medianPricePerSqm,
     );
   });
 

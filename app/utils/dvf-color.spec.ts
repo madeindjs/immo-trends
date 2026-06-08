@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { pricePerSqmToColor } from "./dvf-color.ts";
 
 const sampleStats = {
-  averagePricePerSqm: 2000,
+  medianPricePerSqm: 2000,
   minPricePerSqm: 1000,
   maxPricePerSqm: 3000,
 };
@@ -17,14 +17,14 @@ describe("pricePerSqmToColor", () => {
 
   it("returns gray when stats are missing", () => {
     const colors = pricePerSqmToColor(2000, {
-      averagePricePerSqm: null,
+      medianPricePerSqm: null,
       minPricePerSqm: null,
       maxPricePerSqm: null,
     });
     assert.strictEqual(colors.fillColor, "#9ca3af");
   });
 
-  it("returns green-700 at average", () => {
+  it("returns green-700 at median", () => {
     const colors = pricePerSqmToColor(2000, sampleStats);
     assert.strictEqual(colors.fillColor, "#15803d");
   });
@@ -39,14 +39,14 @@ describe("pricePerSqmToColor", () => {
     assert.strictEqual(colors.fillColor, "#b91c1c");
   });
 
-  it("returns a cool color below average", () => {
+  it("returns a cool color below median", () => {
     const colors = pricePerSqmToColor(1500, sampleStats);
     assert.ok(
       ["#047857", "#0f766e", "#0e7490", "#0369a1"].includes(colors.fillColor),
     );
   });
 
-  it("returns a warm color above average", () => {
+  it("returns a warm color above median", () => {
     const colors = pricePerSqmToColor(2500, sampleStats);
     assert.ok(
       ["#b91c1c", "#c2410c", "#b45309", "#a16207", "#4d7c0f"].includes(

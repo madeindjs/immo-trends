@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { getMedian } from "../../scripts/draw.utils.ts";
+import { getMedian, getPriceStats } from "../../scripts/draw.utils.ts";
 import type {
   DvfMapPoint,
   DvfMapStats,
@@ -28,7 +28,7 @@ export const MAX_DVF_LIMIT = 5000;
 export const defaultDbPath = path.join(process.cwd(), "dvf.sqlite3");
 
 const EMPTY_STATS: DvfMapStats = {
-  averagePricePerSqm: null,
+  medianPricePerSqm: null,
   minPricePerSqm: null,
   maxPricePerSqm: null,
 };
@@ -46,10 +46,8 @@ type DvfMapPointRow = {
   longitude: number;
 };
 
-type DvfStatsRow = {
-  average_price_per_sqm: number | null;
-  min_price_per_sqm: number | null;
-  max_price_per_sqm: number | null;
+type DvfPricePerSqmRow = {
+  price_per_sqm: number;
 };
 
 function buildWhereClause(
@@ -97,41 +95,33 @@ function queryPricePerSqmStats(
 
   const sql = `
     SELECT
-      AVG(CAST(valeur_fonciere AS REAL) / surface_reelle_bati) AS average_price_per_sqm,
-      MIN(CAST(valeur_fonciere AS REAL) / surface_reelle_bati) AS min_price_per_sqm,
-      MAX(CAST(valeur_fonciere AS REAL) / surface_reelle_bati) AS max_price_per_sqm
+      CAST(valeur_fonciere AS REAL) / surface_reelle_bati AS price_per_sqm
     FROM dvf
     WHERE ${conditions.join(" AND ")}
       AND surface_reelle_bati > 0
       AND CAST(valeur_fonciere AS REAL) > 0
   `;
 
-  const row = db.prepare(sql).get(...params) as DvfStatsRow | undefined;
+  const rows = db.prepare(sql).all(...params) as DvfPricePerSqmRow[];
+  const prices = rows
+    .map((row) => row.price_per_sqm)
+    .filter((price): price is number => price != null && Number.isFinite(price));
+  const stats = getPriceStats(prices);
 
-  if (
-    row?.average_price_per_sqm == null ||
-    row.min_price_per_sqm == null ||
-    row.max_price_per_sqm == null
-  ) {
+  if (!stats) {
     return EMPTY_STATS;
   }
 
   return {
-    averagePricePerSqm: row.average_price_per_sqm,
-    minPricePerSqm: row.min_price_per_sqm,
-    maxPricePerSqm: row.max_price_per_sqm,
+    medianPricePerSqm: stats.median,
+    minPricePerSqm: stats.min,
+    maxPricePerSqm: stats.max,
   };
 }
 
 export function isDbAvailable(dbPath: string = defaultDbPath): boolean {
   return fs.existsSync(dbPath);
 }
-
-type DvfTrendAverageRow = {
-  year: string;
-  average_price_per_sqm: number;
-  count: number;
-};
 
 type DvfTrendPriceRow = {
   year: string;
@@ -149,26 +139,6 @@ export function queryDvfPriceTrends(
     const { conditions, params } = buildWhereClause(bounds, filters);
     const validityClause =
       "surface_reelle_bati > 0 AND CAST(valeur_fonciere AS REAL) > 0";
-
-    const averageSql = `
-      SELECT
-        strftime('%Y', date_mutation) AS year,
-        AVG(CAST(valeur_fonciere AS REAL) / surface_reelle_bati) AS average_price_per_sqm,
-        COUNT(*) AS count
-      FROM dvf
-      WHERE ${conditions.join(" AND ")}
-        AND ${validityClause}
-      GROUP BY year
-      ORDER BY year ASC
-    `;
-
-    const averageRows = db
-      .prepare(averageSql)
-      .all(...params) as DvfTrendAverageRow[];
-
-    if (averageRows.length === 0) {
-      return [];
-    }
 
     const pricesSql = `
       SELECT
@@ -192,19 +162,19 @@ export function queryDvfPriceTrends(
       pricesByYear.set(row.year, prices);
     }
 
-    return averageRows.map((row) => {
-      const prices = (pricesByYear.get(row.year) ?? []).filter(
-        (price): price is number => price != null && Number.isFinite(price),
-      );
-      const median = prices.length > 0 ? getMedian(prices) : null;
+    return [...pricesByYear.entries()]
+      .sort(([yearA], [yearB]) => yearA.localeCompare(yearB))
+      .map(([year, rawPrices]) => {
+        const prices = rawPrices.filter(
+          (price): price is number => price != null && Number.isFinite(price),
+        );
 
-      return {
-        year: Number(row.year),
-        medianPricePerSqm: median,
-        averagePricePerSqm: row.average_price_per_sqm,
-        count: row.count,
-      };
-    });
+        return {
+          year: Number(year),
+          medianPricePerSqm: prices.length > 0 ? getMedian(prices) : null,
+          count: prices.length,
+        };
+      });
   } finally {
     db.close();
   }

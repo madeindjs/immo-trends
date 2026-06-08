@@ -16,7 +16,7 @@ const PRICE_SCALE_700 = [
   "#0369a1", // sky-700
 ] as const;
 
-const AVERAGE_INDEX = 5;
+const MEDIAN_INDEX = 5;
 
 export type DvfMarkerColors = {
   fillColor: string;
@@ -24,31 +24,31 @@ export type DvfMarkerColors = {
 };
 
 function hasValidStats(stats: DvfMapStats): stats is {
-  averagePricePerSqm: number;
+  medianPricePerSqm: number;
   minPricePerSqm: number;
   maxPricePerSqm: number;
 } {
   return (
-    stats.averagePricePerSqm !== null &&
+    stats.medianPricePerSqm !== null &&
     stats.minPricePerSqm !== null &&
     stats.maxPricePerSqm !== null
   );
 }
 
 function scaleIndex(pricePerSqm: number, stats: DvfMapStats): number {
-  const { averagePricePerSqm, minPricePerSqm, maxPricePerSqm } = stats;
+  const { medianPricePerSqm, minPricePerSqm, maxPricePerSqm } = stats;
 
-  if (pricePerSqm <= averagePricePerSqm) {
-    const range = averagePricePerSqm - minPricePerSqm;
-    const t = range === 0 ? 0 : (averagePricePerSqm - pricePerSqm) / range;
-    const offset = Math.round(t * (PRICE_SCALE_700.length - 1 - AVERAGE_INDEX));
-    return Math.min(AVERAGE_INDEX + offset, PRICE_SCALE_700.length - 1);
+  if (pricePerSqm <= medianPricePerSqm) {
+    const range = medianPricePerSqm - minPricePerSqm;
+    const t = range === 0 ? 0 : (medianPricePerSqm - pricePerSqm) / range;
+    const offset = Math.round(t * (PRICE_SCALE_700.length - 1 - MEDIAN_INDEX));
+    return Math.min(MEDIAN_INDEX + offset, PRICE_SCALE_700.length - 1);
   }
 
-  const range = maxPricePerSqm - averagePricePerSqm;
-  const t = range === 0 ? 0 : (pricePerSqm - averagePricePerSqm) / range;
-  const offset = Math.round(t * AVERAGE_INDEX);
-  return Math.max(AVERAGE_INDEX - offset, 0);
+  const range = maxPricePerSqm - medianPricePerSqm;
+  const t = range === 0 ? 0 : (pricePerSqm - medianPricePerSqm) / range;
+  const offset = Math.round(t * MEDIAN_INDEX);
+  return Math.max(MEDIAN_INDEX - offset, 0);
 }
 
 export function pricePerSqmToColor(

@@ -44,7 +44,7 @@
             </p>
           </div>
           <div class="rounded-box bg-base-200 px-3 py-2">
-            <p class="text-xs text-base-content/60">Moyenne</p>
+            <p class="text-xs text-base-content/60">Médiane</p>
             <p class="flex min-h-5 items-center text-sm font-semibold">
               <span
                 v-if="loading"
@@ -52,7 +52,7 @@
                 aria-label="Chargement"
               />
               <template v-else>
-                {{ formatPricePerSqm(stats.averagePricePerSqm) }}/m²
+                {{ formatPricePerSqm(stats.medianPricePerSqm) }}/m²
               </template>
             </p>
           </div>
@@ -146,7 +146,7 @@ const statusMessage = computed((): string | null => {
 
   if (
     props.stats.minPricePerSqm == null &&
-    props.stats.averagePricePerSqm == null &&
+    props.stats.medianPricePerSqm == null &&
     props.stats.maxPricePerSqm == null
   ) {
     return "Aucune transaction dans cette zone.";
@@ -168,15 +168,6 @@ function buildChartConfig(): ChartConfiguration<"line"> {
           data: props.trends.map((point) => point.medianPricePerSqm),
           borderColor: "#2563eb",
           backgroundColor: "rgba(37, 99, 235, 0.1)",
-          tension: 0.2,
-          pointRadius: 3,
-        },
-        {
-          label: "Moyenne",
-          data: props.trends.map((point) => point.averagePricePerSqm),
-          borderColor: "#f97316",
-          backgroundColor: "rgba(249, 115, 22, 0.1)",
-          borderDash: [6, 4],
           tension: 0.2,
           pointRadius: 3,
         },

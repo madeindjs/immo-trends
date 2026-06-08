@@ -12,7 +12,7 @@ type DvfApiResponse = {
 };
 
 const EMPTY_STATS: DvfMapStats = {
-  averagePricePerSqm: null,
+  medianPricePerSqm: null,
   minPricePerSqm: null,
   maxPricePerSqm: null,
 };

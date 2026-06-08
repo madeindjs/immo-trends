@@ -166,10 +166,10 @@ describe("queryDvfInBounds", () => {
       dbPath,
     );
 
-    assert.ok(result.stats.averagePricePerSqm !== null);
-    assert.ok(result.stats.averagePricePerSqm! > 0);
-    assert.ok(result.stats.minPricePerSqm! <= result.stats.averagePricePerSqm!);
-    assert.ok(result.stats.averagePricePerSqm! <= result.stats.maxPricePerSqm!);
+    assert.ok(result.stats.medianPricePerSqm !== null);
+    assert.ok(result.stats.medianPricePerSqm! > 0);
+    assert.ok(result.stats.minPricePerSqm! <= result.stats.medianPricePerSqm!);
+    assert.ok(result.stats.medianPricePerSqm! <= result.stats.maxPricePerSqm!);
   });
 
   it("filters stats by type_local and year", () => {
@@ -195,10 +195,10 @@ describe("queryDvfInBounds", () => {
       dbPath,
     );
 
-    assert.ok(filtered.stats.averagePricePerSqm !== null);
+    assert.ok(filtered.stats.medianPricePerSqm !== null);
     assert.notStrictEqual(
-      filtered.stats.averagePricePerSqm,
-      unfiltered.stats.averagePricePerSqm,
+      filtered.stats.medianPricePerSqm,
+      unfiltered.stats.medianPricePerSqm,
     );
   });
 
@@ -214,7 +214,7 @@ describe("queryDvfInBounds", () => {
       dbPath,
     );
 
-    assert.strictEqual(result.stats.averagePricePerSqm, null);
+    assert.strictEqual(result.stats.medianPricePerSqm, null);
     assert.strictEqual(result.stats.minPricePerSqm, null);
     assert.strictEqual(result.stats.maxPricePerSqm, null);
   });
