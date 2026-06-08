@@ -1,63 +1,98 @@
 <template>
-  <div class="page">
-    <header>
-      <h1>Immo trends</h1>
-      <p>
-        Analyse les données libres des
-        <a
-          href="https://www.data.gouv.fr/fr/datasets/demandes-de-valeurs-foncieres/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          demandes de valeurs foncières
-        </a>
-        pour visualiser l'évolution des prix par code postal.
-      </p>
-    </header>
-
-    <section>
-      <h2>Démarrage</h2>
-      <ol>
-        <li>Initialiser les données : <code>./init.sh</code></li>
-        <li>
-          Générer un graphique :
-          <code>npm run draw -- 69001 69002 69003</code>
-        </li>
-        <li>Lancer l'interface web : <code>npm run dev</code></li>
-      </ol>
-    </section>
-  </div>
+  <ClientOnly>
+    <div v-if="mapReady" class="map">
+      <LMap
+        v-model:zoom="zoom"
+        v-model:center="center"
+        :use-global-leaflet="false"
+        @ready="onMapReady"
+      >
+        <LTileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; <a href=&quot;https://www.openstreetmap.org/&quot;>OpenStreetMap</a> contributors"
+          layer-type="base"
+          name="OpenStreetMap"
+        />
+      </LMap>
+    </div>
+  </ClientOnly>
 </template>
 
+<script setup lang="ts">
+import type { Map } from "leaflet";
+
+const STORAGE_KEY = "immo-trends.map";
+const DEFAULT_ZOOM = 6;
+const DEFAULT_CENTER: [number, number] = [46.6, 2.4];
+
+type MapViewState = {
+  zoom: number;
+  center: [number, number];
+};
+
+function loadMapView(): MapViewState {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return { zoom: DEFAULT_ZOOM, center: DEFAULT_CENTER };
+    }
+
+    const parsed = JSON.parse(raw) as Partial<MapViewState>;
+    const lat = parsed.center?.[0];
+    const lng = parsed.center?.[1];
+
+    if (
+      typeof parsed.zoom === "number" &&
+      typeof lat === "number" &&
+      typeof lng === "number"
+    ) {
+      return { zoom: parsed.zoom, center: [lat, lng] };
+    }
+  } catch {
+    // ignore invalid stored state
+  }
+
+  return { zoom: DEFAULT_ZOOM, center: DEFAULT_CENTER };
+}
+
+function saveMapView(state: MapViewState): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+const mapReady = ref(false);
+const zoom = ref(DEFAULT_ZOOM);
+const center = ref<[number, number]>(DEFAULT_CENTER);
+
+onMounted(() => {
+  const saved = loadMapView();
+  zoom.value = saved.zoom;
+  center.value = saved.center;
+  mapReady.value = true;
+});
+
+function onMapReady(map: Map): void {
+  map.on("moveend", () => {
+    const { lat, lng } = map.getCenter();
+    saveMapView({
+      zoom: map.getZoom(),
+      center: [lat, lng],
+    });
+  });
+}
+</script>
+
+<style>
+html,
+body,
+#__nuxt {
+  height: 100%;
+  margin: 0;
+}
+</style>
+
 <style scoped>
-.page {
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
-  line-height: 1.5;
-  max-width: 42rem;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
-}
-
-h1 {
-  margin-bottom: 0.5rem;
-}
-
-h2 {
-  margin-top: 2rem;
-  font-size: 1.125rem;
-}
-
-a {
-  color: #2563eb;
-}
-
-code {
-  font-family: ui-monospace, monospace;
-  background: #f3f4f6;
-  padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
+.map {
+  height: 100vh;
+  width: 100vw;
 }
 </style>
