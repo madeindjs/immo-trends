@@ -17,6 +17,7 @@ describe("buildDvfPopupContent", () => {
     });
 
     assert.match(html, /<strong>185 000 €<\/strong>/);
+    assert.match(html, /5 janvier 2021/);
     assert.match(html, /5080 CHE DE VOGELAS/);
     assert.match(html, /class="dvf-popup"/);
   });

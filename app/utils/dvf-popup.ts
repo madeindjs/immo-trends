@@ -1,3 +1,4 @@
+import { formatMutationDate } from "./format-date.ts";
 import { formatPropertyPrice } from "./format-price.ts";
 
 export type DvfPopupProperties = {
@@ -36,7 +37,7 @@ function formatSurface(surface: number | null): string {
 export function buildDvfPopupContent(properties: DvfPopupProperties): string {
   const lines = [
     `<strong>${formatPropertyPrice(properties.valeur_fonciere)}</strong>`,
-    properties.date_mutation,
+    formatMutationDate(properties.date_mutation),
     properties.type_local || "—",
     formatAddress(properties),
     `${properties.code_postal} ${properties.nom_commune}`,
