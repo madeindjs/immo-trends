@@ -40,6 +40,17 @@ describe("parseUrlState", () => {
     assert.strictEqual(state.filters.surfaceMax, null);
     assert.strictEqual(state.filters.pricePerSqmMin, null);
     assert.strictEqual(state.filters.pricePerSqmMax, 5000);
+    assert.strictEqual(state.filters.codeIris, null);
+    assert.strictEqual(state.filters.irisLabel, null);
+  });
+
+  it("parses iris zone code", () => {
+    const state = parseUrlState({
+      iris: "014260001",
+    });
+
+    assert.strictEqual(state.filters.codeIris, "014260001");
+    assert.strictEqual(state.filters.irisLabel, null);
   });
 
   it("parses comma-separated type_local values", () => {
@@ -93,6 +104,8 @@ describe("buildUrlQuery", () => {
         surfaceMax: null,
         pricePerSqmMin: null,
         pricePerSqmMax: null,
+        codeIris: null,
+        irisLabel: null,
       },
     });
 
@@ -123,6 +136,8 @@ describe("buildUrlQuery", () => {
         surfaceMax: null,
         pricePerSqmMin: null,
         pricePerSqmMax: 5000,
+        codeIris: "014260001",
+        irisLabel: "centre, Val-Revermont",
       },
     });
 
@@ -135,6 +150,7 @@ describe("buildUrlQuery", () => {
       year_max: "2022",
       surface_min: "50",
       price_per_sqm_max: "5000",
+      iris: "014260001",
     });
   });
 });
@@ -152,6 +168,8 @@ describe("url state round-trip", () => {
         surfaceMax: 90,
         pricePerSqmMin: 1500,
         pricePerSqmMax: 4000,
+        codeIris: "014260001",
+        irisLabel: null,
       },
     };
 
@@ -159,7 +177,9 @@ describe("url state round-trip", () => {
 
     assert.strictEqual(parsed.zoom, initial.zoom);
     assert.deepStrictEqual(parsed.center, initial.center);
-    assert.deepStrictEqual(parsed.filters, initial.filters);
+    assert.deepStrictEqual(parsed.filters.typeLocals, initial.filters.typeLocals);
+    assert.strictEqual(parsed.filters.codeIris, "014260001");
+    assert.strictEqual(parsed.filters.irisLabel, null);
   });
 });
 

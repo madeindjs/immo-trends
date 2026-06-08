@@ -19,6 +19,7 @@ export type DvfQueryParams = {
   surface_max?: string | string[] | undefined;
   price_per_sqm_min?: string | string[] | undefined;
   price_per_sqm_max?: string | string[] | undefined;
+  code_iris?: string | string[] | undefined;
 };
 
 function firstValue(value: string | string[] | undefined): string | undefined {
@@ -117,6 +118,21 @@ function parseOptionalPositiveNumber(
   return parsed;
 }
 
+function parseOptionalCodeIris(
+  value: string | string[] | undefined,
+): string | undefined {
+  const raw = firstValue(value);
+  if (raw === undefined || raw === "") {
+    return undefined;
+  }
+
+  if (!/^\d{9}$/.test(raw)) {
+    throw new Error("Invalid code_iris parameter: expected 9 digits");
+  }
+
+  return raw;
+}
+
 function assertRangeOrder(
   minName: string,
   maxName: string,
@@ -190,6 +206,7 @@ export function parseDvfQuery(
       surfaceMax,
       pricePerSqmMin,
       pricePerSqmMax,
+      codeIris: parseOptionalCodeIris(query.code_iris),
     },
   };
 }

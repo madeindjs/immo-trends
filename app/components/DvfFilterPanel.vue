@@ -3,6 +3,23 @@
     <div class="flex flex-col gap-4 p-4">
       <h2 class="text-base font-semibold">Filtres</h2>
 
+      <div
+        v-if="filters.codeIris"
+        class="rounded-box border border-primary/30 bg-primary/5 p-3"
+      >
+        <p class="text-sm font-medium">Zone IRIS sélectionnée</p>
+        <p class="text-sm text-base-content/80">
+          {{ filters.irisLabel ?? filters.codeIris }}
+        </p>
+        <button
+          type="button"
+          class="btn btn-ghost btn-xs mt-2"
+          @click="clearSelectedZone"
+        >
+          Effacer la zone
+        </button>
+      </div>
+
       <fieldset class="fieldset">
         <legend class="fieldset-legend">Type de bien</legend>
         <label class="label cursor-pointer justify-start gap-3">
@@ -142,6 +159,14 @@ const pricePerSqmMax = ref(filters.value.pricePerSqmMax);
 
 let isSyncingFromModel = false;
 
+function clearSelectedZone(): void {
+  filters.value = {
+    ...filters.value,
+    codeIris: null,
+    irisLabel: null,
+  };
+}
+
 function normalizeOptionalNumber(value: number | null): number | null {
   return value != null && Number.isFinite(value) ? value : null;
 }
@@ -201,6 +226,8 @@ watch(
       surfaceMax: normalizeOptionalNumber(surfaceMax.value),
       pricePerSqmMin: normalizeOptionalNumber(pricePerSqmMin.value),
       pricePerSqmMax: normalizeOptionalNumber(pricePerSqmMax.value),
+      codeIris: filters.value.codeIris,
+      irisLabel: filters.value.irisLabel,
     };
   },
 );

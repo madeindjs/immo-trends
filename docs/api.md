@@ -21,6 +21,7 @@ Returns DVF transaction points for the current map bounding box.
 | `surface_max` | no | Maximum built surface in m² (`surface_reelle_bati`) |
 | `price_per_sqm_min` | no | Minimum price per m² in € (`valeur_fonciere / surface_reelle_bati`) |
 | `price_per_sqm_max` | no | Maximum price per m² in € (`valeur_fonciere / surface_reelle_bati`) |
+| `code_iris` | no | Filter by IRIS zone code (`9` digits). When set, results cover the full zone regardless of map bounds. |
 
 ### Response
 
@@ -88,6 +89,7 @@ Returns yearly price-per-m² trends for the current map bounding box.
 | `surface_max` | no | Maximum built surface in m² (`surface_reelle_bati`) |
 | `price_per_sqm_min` | no | Minimum price per m² in € (`valeur_fonciere / surface_reelle_bati`) |
 | `price_per_sqm_max` | no | Maximum price per m² in € (`valeur_fonciere / surface_reelle_bati`) |
+| `code_iris` | no | Filter by IRIS zone code (`9` digits). When set, results cover the full zone regardless of map bounds. |
 
 ### Response
 
@@ -121,4 +123,55 @@ Each trend point aggregates all qualifying transactions for that year in the bou
 
 ```sh
 curl "http://localhost:3000/api/dvf-trends?north=46.5&south=46.2&east=5.5&west=5.0&type_local=Maison&year_min=2020&year_max=2022"
+```
+
+## `GET /api/iris`
+
+Returns IRIS zone polygons for the current map bounding box as a GeoJSON `FeatureCollection`.
+
+### Query parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `north` | yes | Northern latitude bound (WGS-84) |
+| `south` | yes | Southern latitude bound (WGS-84) |
+| `east` | yes | Eastern longitude bound (WGS-84) |
+| `west` | yes | Western longitude bound (WGS-84) |
+| `limit` | no | Maximum number of zones to return. Default: `500`. Max: `1000`. |
+
+### Response
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "code_iris": "014260001",
+        "insee_com": "01426",
+        "nom_com": "Val-Revermont",
+        "nom_iris": "centre",
+        "typ_iris": "H"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[5.38, 46.32], [5.39, 46.32], [5.39, 46.33], [5.38, 46.33], [5.38, 46.32]]]
+      }
+    }
+  ]
+}
+```
+
+### Errors
+
+| Status | Meaning |
+|--------|---------|
+| `400` | Missing or invalid query parameters |
+| `503` | IRIS data not found. Run `./init.sh` first. |
+
+### Example
+
+```sh
+curl "http://localhost:3000/api/iris?north=46.33&south=46.32&east=5.39&west=5.38"
 ```

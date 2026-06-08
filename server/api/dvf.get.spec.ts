@@ -370,6 +370,56 @@ describe("queryDvfInBounds", () => {
     assert.ok(result.points.length > 0);
     assert.ok(result.points.every((point) => point.type_local === "Appartement"));
   });
+
+  it("filters by code_iris across the full zone", () => {
+    const wideBounds = {
+      north: 47.0,
+      south: 46.0,
+      east: 6.0,
+      west: 4.0,
+    };
+
+    const unfiltered = queryDvfInBounds(wideBounds, { limit: 2000 }, dbPath);
+    const filtered = queryDvfInBounds(
+      wideBounds,
+      { limit: 2000, codeIris: "014260001" },
+      dbPath,
+    );
+
+    assert.ok(filtered.points.length > 0);
+    assert.ok(filtered.points.length < unfiltered.points.length);
+    assert.ok(
+      filtered.points.every((point) => point.nom_commune === "Val-Revermont"),
+    );
+  });
+});
+
+describe("parseDvfQuery code_iris", () => {
+  it("parses optional code_iris", () => {
+    const result = parseDvfQuery({
+      north: "46.5",
+      south: "46.2",
+      east: "5.5",
+      west: "5.0",
+      code_iris: "014260001",
+    });
+
+    assert.strictEqual(result.filters.codeIris, "014260001");
+  });
+
+  it("rejects invalid code_iris", () => {
+    assert.throws(
+      () =>
+        parseDvfQuery({
+          north: "46.5",
+          south: "46.2",
+          east: "5.5",
+          west: "5.0",
+          code_iris: "1426",
+        }),
+      /Invalid code_iris parameter/,
+    );
+  });
 });
 
 describe("isDbAvailable", () => {

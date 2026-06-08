@@ -1,10 +1,13 @@
 import type { LatLngBounds } from "leaflet";
-import type { DvfPriceTrendPoint, DvfTrendsResponse } from "../../types.ts";
-import type { DvfPointFilters } from "./useDvfPoints.ts";
-import { MIN_FETCH_ZOOM } from "./useDvfPoints.ts";
-import { buildDvfQueryParams } from "../utils/dvf-query.ts";
+import type { Feature, FeatureCollection, Polygon } from "geojson";
+import type { IrisZoneProperties } from "../../server/utils/iris-db.ts";
 
+export const MIN_IRIS_ZOOM = 9;
 const DEBOUNCE_MS = 300;
+
+export type IrisZoneFeature = Feature<Polygon, IrisZoneProperties>;
+
+type IrisApiResponse = FeatureCollection<Polygon, IrisZoneProperties>;
 
 function isAbortError(error: unknown): boolean {
   if (error instanceof Error && error.name === "AbortError") {
@@ -15,8 +18,8 @@ function isAbortError(error: unknown): boolean {
   return cause instanceof DOMException && cause.name === "AbortError";
 }
 
-export function useDvfTrends() {
-  const trends = ref<DvfPriceTrendPoint[]>([]);
+export function useIrisZones() {
+  const zones = ref<IrisZoneFeature[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
 
@@ -37,18 +40,11 @@ export function useDvfTrends() {
   async function fetchForBounds(
     bounds: LatLngBounds,
     zoom: number,
-    filters: DvfPointFilters,
   ): Promise<void> {
     cancelPending();
 
-    if (zoom < MIN_FETCH_ZOOM && filters.codeIris == null) {
-      trends.value = [];
-      error.value = null;
-      return;
-    }
-
-    if (filters.typeLocals.length === 0) {
-      trends.value = [];
+    if (zoom < MIN_IRIS_ZOOM) {
+      zones.value = [];
       error.value = null;
       return;
     }
@@ -59,8 +55,13 @@ export function useDvfTrends() {
     error.value = null;
 
     try {
-      const response = await $fetch<DvfTrendsResponse>("/api/dvf-trends", {
-        query: buildDvfQueryParams(bounds, filters),
+      const response = await $fetch<IrisApiResponse>("/api/iris", {
+        query: {
+          north: bounds.getNorth(),
+          south: bounds.getSouth(),
+          east: bounds.getEast(),
+          west: bounds.getWest(),
+        },
         signal: controller.signal,
       });
 
@@ -68,17 +69,17 @@ export function useDvfTrends() {
         return;
       }
 
-      trends.value = response.trends;
+      zones.value = response.features as IrisZoneFeature[];
     } catch (fetchError) {
       if (controller.signal.aborted || isAbortError(fetchError)) {
         return;
       }
 
-      trends.value = [];
+      zones.value = [];
       error.value =
         fetchError instanceof Error
           ? fetchError.message
-          : "Failed to load DVF trends";
+          : "Failed to load IRIS zones";
     } finally {
       if (!controller.signal.aborted) {
         loading.value = false;
@@ -87,21 +88,17 @@ export function useDvfTrends() {
     }
   }
 
-  function scheduleFetch(
-    bounds: LatLngBounds,
-    zoom: number,
-    filters: DvfPointFilters,
-  ): void {
+  function scheduleFetch(bounds: LatLngBounds, zoom: number): void {
     cancelPending();
 
     debounceTimer = setTimeout(() => {
       debounceTimer = undefined;
-      void fetchForBounds(bounds, zoom, filters);
+      void fetchForBounds(bounds, zoom);
     }, DEBOUNCE_MS);
   }
 
   return {
-    trends,
+    zones,
     loading,
     error,
     cancelPending,
