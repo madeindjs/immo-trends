@@ -1,7 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import type { DvfMapPoint, DvfMapStats } from "../../types.ts";
+import { getMedian } from "../../scripts/draw.utils.ts";
+import type {
+  DvfMapPoint,
+  DvfMapStats,
+  DvfPriceTrendPoint,
+} from "../../types.ts";
 
 export type DvfBounds = {
   north: number;
@@ -120,6 +125,89 @@ function queryPricePerSqmStats(
 
 export function isDbAvailable(dbPath: string = defaultDbPath): boolean {
   return fs.existsSync(dbPath);
+}
+
+type DvfTrendAverageRow = {
+  year: string;
+  average_price_per_sqm: number;
+  count: number;
+};
+
+type DvfTrendPriceRow = {
+  year: string;
+  price_per_sqm: number;
+};
+
+export function queryDvfPriceTrends(
+  bounds: DvfBounds,
+  filters: Pick<DvfQueryFilters, "typeLocals" | "yearMin" | "yearMax">,
+  dbPath: string = defaultDbPath,
+): DvfPriceTrendPoint[] {
+  const db = new DatabaseSync(dbPath);
+
+  try {
+    const { conditions, params } = buildWhereClause(bounds, filters);
+    const validityClause =
+      "surface_reelle_bati > 0 AND CAST(valeur_fonciere AS REAL) > 0";
+
+    const averageSql = `
+      SELECT
+        strftime('%Y', date_mutation) AS year,
+        AVG(CAST(valeur_fonciere AS REAL) / surface_reelle_bati) AS average_price_per_sqm,
+        COUNT(*) AS count
+      FROM dvf
+      WHERE ${conditions.join(" AND ")}
+        AND ${validityClause}
+      GROUP BY year
+      ORDER BY year ASC
+    `;
+
+    const averageRows = db
+      .prepare(averageSql)
+      .all(...params) as DvfTrendAverageRow[];
+
+    if (averageRows.length === 0) {
+      return [];
+    }
+
+    const pricesSql = `
+      SELECT
+        strftime('%Y', date_mutation) AS year,
+        CAST(valeur_fonciere AS REAL) / surface_reelle_bati AS price_per_sqm
+      FROM dvf
+      WHERE ${conditions.join(" AND ")}
+        AND ${validityClause}
+    `;
+
+    const priceRows = db.prepare(pricesSql).all(...params) as DvfTrendPriceRow[];
+    const pricesByYear = new Map<string, number[]>();
+
+    for (const row of priceRows) {
+      if (row.year == null || row.price_per_sqm == null) {
+        continue;
+      }
+
+      const prices = pricesByYear.get(row.year) ?? [];
+      prices.push(row.price_per_sqm);
+      pricesByYear.set(row.year, prices);
+    }
+
+    return averageRows.map((row) => {
+      const prices = (pricesByYear.get(row.year) ?? []).filter(
+        (price): price is number => price != null && Number.isFinite(price),
+      );
+      const median = prices.length > 0 ? getMedian(prices) : null;
+
+      return {
+        year: Number(row.year),
+        medianPricePerSqm: median,
+        averagePricePerSqm: row.average_price_per_sqm,
+        count: row.count,
+      };
+    });
+  } finally {
+    db.close();
+  }
 }
 
 export function queryDvfInBounds(

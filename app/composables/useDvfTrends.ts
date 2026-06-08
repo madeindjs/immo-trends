@@ -1,27 +1,10 @@
 import type { LatLngBounds } from "leaflet";
-import type { DvfMapPoint, DvfMapStats } from "../../types.ts";
+import type { DvfPriceTrendPoint, DvfTrendsResponse } from "../../types.ts";
+import type { DvfPointFilters } from "./useDvfPoints.ts";
+import { MIN_FETCH_ZOOM } from "./useDvfPoints.ts";
 import { buildDvfQueryParams } from "../utils/dvf-query.ts";
 
-export const MIN_FETCH_ZOOM = 10;
 const DEBOUNCE_MS = 300;
-
-type DvfApiResponse = {
-  points: DvfMapPoint[];
-  truncated: boolean;
-  stats: DvfMapStats;
-};
-
-const EMPTY_STATS: DvfMapStats = {
-  averagePricePerSqm: null,
-  minPricePerSqm: null,
-  maxPricePerSqm: null,
-};
-
-export type DvfPointFilters = {
-  typeLocals: string[];
-  yearMin: number;
-  yearMax: number;
-};
 
 function isAbortError(error: unknown): boolean {
   if (error instanceof Error && error.name === "AbortError") {
@@ -32,12 +15,10 @@ function isAbortError(error: unknown): boolean {
   return cause instanceof DOMException && cause.name === "AbortError";
 }
 
-export function useDvfPoints() {
-  const points = ref<DvfMapPoint[]>([]);
-  const stats = ref<DvfMapStats>({ ...EMPTY_STATS });
+export function useDvfTrends() {
+  const trends = ref<DvfPriceTrendPoint[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
-  const truncated = ref(false);
 
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
   let abortController: AbortController | undefined;
@@ -61,17 +42,13 @@ export function useDvfPoints() {
     cancelPending();
 
     if (zoom < MIN_FETCH_ZOOM) {
-      points.value = [];
-      stats.value = { ...EMPTY_STATS };
-      truncated.value = false;
+      trends.value = [];
       error.value = null;
       return;
     }
 
     if (filters.typeLocals.length === 0) {
-      points.value = [];
-      stats.value = { ...EMPTY_STATS };
-      truncated.value = false;
+      trends.value = [];
       error.value = null;
       return;
     }
@@ -82,7 +59,7 @@ export function useDvfPoints() {
     error.value = null;
 
     try {
-      const response = await $fetch<DvfApiResponse>("/api/dvf", {
+      const response = await $fetch<DvfTrendsResponse>("/api/dvf-trends", {
         query: buildDvfQueryParams(bounds, filters),
         signal: controller.signal,
       });
@@ -91,21 +68,17 @@ export function useDvfPoints() {
         return;
       }
 
-      points.value = response.points;
-      stats.value = response.stats;
-      truncated.value = response.truncated;
+      trends.value = response.trends;
     } catch (fetchError) {
       if (controller.signal.aborted || isAbortError(fetchError)) {
         return;
       }
 
-      points.value = [];
-      stats.value = { ...EMPTY_STATS };
-      truncated.value = false;
+      trends.value = [];
       error.value =
         fetchError instanceof Error
           ? fetchError.message
-          : "Failed to load DVF points";
+          : "Failed to load DVF trends";
     } finally {
       if (!controller.signal.aborted) {
         loading.value = false;
@@ -128,11 +101,9 @@ export function useDvfPoints() {
   }
 
   return {
-    points,
-    stats,
+    trends,
     loading,
     error,
-    truncated,
     cancelPending,
     fetchForBounds,
     scheduleFetch,

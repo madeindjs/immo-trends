@@ -92,6 +92,18 @@ export type DvfMapStats = {
   maxPricePerSqm: number | null;
 };
 
+/** Yearly price-per-m² trend point for the map trends API. */
+export type DvfPriceTrendPoint = {
+  year: number;
+  medianPricePerSqm: number | null;
+  averagePricePerSqm: number | null;
+  count: number;
+};
+
+export type DvfTrendsResponse = {
+  trends: DvfPriceTrendPoint[];
+};
+
 /** Lightweight DVF point returned by the map API. */
 export type DvfMapPoint = {
   id_mutation: string;

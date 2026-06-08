@@ -1,30 +1,78 @@
 <template>
   <ClientOnly>
-    <div v-if="mapReady" class="map">
-      <DvfFilterPanel v-model="filters" />
+    <div v-if="mapReady" class="drawer map">
+      <input
+        id="dvf-filter-drawer"
+        type="checkbox"
+        class="drawer-toggle"
+      />
 
-      <LMap
-        v-model:zoom="zoom"
-        v-model:center="center"
-        :use-global-leaflet="false"
-        @ready="onMapReady"
-      >
-        <LTileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; <a href=&quot;https://www.openstreetmap.org/&quot;>OpenStreetMap</a> contributors"
-          layer-type="base"
-          name="OpenStreetMap"
-        />
-      </LMap>
+      <div class="drawer-content flex flex-col h-full">
+        <div class="map-area relative flex-1 min-h-0">
+          <LMap
+            v-model:zoom="zoom"
+            v-model:center="center"
+            :use-global-leaflet="false"
+            @ready="onMapReady"
+          >
+            <LTileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution="&copy; <a href=&quot;https://www.openstreetmap.org/&quot;>OpenStreetMap</a> contributors"
+              layer-type="base"
+              name="OpenStreetMap"
+            />
+          </LMap>
 
-      <div v-if="statusToast" class="toast toast-bottom toast-end z-[1000]">
-        <div :class="['alert', statusToast.alertClass]">
-          <span
-            v-if="statusToast.showSpinner"
-            class="loading loading-spinner loading-sm"
-          />
-          <span>{{ statusToast.message }}</span>
+          <label
+            for="dvf-filter-drawer"
+            class="filter-control-btn"
+            aria-label="Ouvrir les filtres"
+            title="Filtres"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="size-4"
+              aria-hidden="true"
+            >
+              <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+            </svg>
+          </label>
+
+          <div v-if="statusToast" class="toast toast-top toast-end z-[1000]">
+            <div :class="['alert', statusToast.alertClass]">
+              <span
+                v-if="statusToast.showSpinner"
+                class="loading loading-spinner loading-sm"
+              />
+              <span>{{ statusToast.message }}</span>
+            </div>
+          </div>
         </div>
+
+        <DvfStatsPanel
+          v-model:collapsed="statsPanelCollapsed"
+          :stats="stats"
+          :trends="trends"
+          :loading="loading || trendsLoading"
+          :error="trendsError"
+          :zoom-too-low="zoomTooLowForData"
+          :filters-valid="filtersAreValid()"
+        />
+      </div>
+
+      <div class="drawer-side z-[1001]">
+        <label
+          for="dvf-filter-drawer"
+          aria-label="Fermer les filtres"
+          class="drawer-overlay"
+        />
+        <DvfFilterPanel v-model="filters" />
       </div>
     </div>
   </ClientOnly>
@@ -42,6 +90,7 @@ import type { DvfPointFilters } from "./composables/useDvfPoints.ts";
 type LeafletModule = typeof import("leaflet/dist/leaflet-src.esm");
 
 const STORAGE_KEY = "immo-trends.map";
+const STATS_PANEL_STORAGE_KEY = "immo-trends.stats-panel-collapsed";
 const DEFAULT_ZOOM = 6;
 const DEFAULT_CENTER: [number, number] = [46.6, 2.4];
 
@@ -145,14 +194,45 @@ const center = ref<[number, number]>(DEFAULT_CENTER);
 const mapInstance = shallowRef<Map | null>(null);
 const leafletModule = shallowRef<LeafletModule | null>(null);
 const dvfLayer = shallowRef<GeoJSON | null>(null);
-const { points, stats, loading, error, truncated, cancelPending, scheduleFetch } =
-  useDvfPoints();
+const {
+  points,
+  stats,
+  loading,
+  error,
+  truncated,
+  cancelPending,
+  scheduleFetch,
+} = useDvfPoints();
+const {
+  trends,
+  loading: trendsLoading,
+  error: trendsError,
+  cancelPending: cancelTrendsPending,
+  scheduleFetch: scheduleTrendsFetch,
+} = useDvfTrends();
 
 const filters = ref<DvfPointFilters>({
   typeLocals: ["Appartement", "Maison"],
   yearMin: 2014,
   yearMax: new Date().getFullYear(),
 });
+const statsPanelCollapsed = ref(loadStatsPanelCollapsed());
+
+function loadStatsPanelCollapsed(): boolean {
+  try {
+    return localStorage.getItem(STATS_PANEL_STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function saveStatsPanelCollapsed(collapsed: boolean): void {
+  localStorage.setItem(STATS_PANEL_STORAGE_KEY, String(collapsed));
+}
+
+const zoomTooLowForData = computed(
+  () => (mapInstance.value?.getZoom() ?? zoom.value) < MIN_FETCH_ZOOM,
+);
 
 function filtersAreValid(): boolean {
   return (
@@ -279,13 +359,20 @@ const statusToast = computed((): StatusToast | null => {
   };
 });
 
-function refreshPoints(): void {
+function refreshData(): void {
   const map = mapInstance.value;
   if (!map) {
     return;
   }
 
-  scheduleFetch(map.getBounds(), map.getZoom(), filters.value);
+  const bounds = map.getBounds();
+  const currentZoom = map.getZoom();
+  scheduleFetch(bounds, currentZoom, filters.value);
+  scheduleTrendsFetch(bounds, currentZoom, filters.value);
+}
+
+function invalidateMapSize(): void {
+  mapInstance.value?.invalidateSize();
 }
 
 watch([points, stats], () => {
@@ -293,8 +380,15 @@ watch([points, stats], () => {
 });
 
 watch(filters, () => {
-  refreshPoints();
+  refreshData();
 }, { deep: true });
+
+watch(statsPanelCollapsed, (collapsed) => {
+  saveStatsPanelCollapsed(collapsed);
+  nextTick(() => {
+    invalidateMapSize();
+  });
+});
 
 onBeforeUnmount(() => {
   const map = mapInstance.value;
@@ -319,14 +413,19 @@ function onMapReady(map: Map): void {
       zoom: map.getZoom(),
       center: [lat, lng],
     });
-    refreshPoints();
+    refreshData();
   };
 
-  map.on("movestart", cancelPending);
-  map.on("zoomstart", cancelPending);
+  const handleMoveStart = () => {
+    cancelPending();
+    cancelTrendsPending();
+  };
+
+  map.on("movestart", handleMoveStart);
+  map.on("zoomstart", handleMoveStart);
   map.on("moveend", handleViewportChange);
   map.on("zoomend", handleViewportChange);
-  refreshPoints();
+  refreshData();
   void renderPoints();
 }
 </script>
@@ -344,6 +443,35 @@ body,
 .map {
   height: 100vh;
   width: 100vw;
+}
+
+.drawer-content {
   position: relative;
+  height: 100%;
+}
+
+.map-area {
+  width: 100%;
+}
+
+.filter-control-btn {
+  position: absolute;
+  top: 74px;
+  left: 10px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+}
+
+.filter-control-btn:hover {
+  background: #f4f4f4;
 }
 </style>

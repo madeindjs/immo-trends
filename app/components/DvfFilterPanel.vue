@@ -1,7 +1,7 @@
 <template>
-  <aside class="filter-panel card bg-base-100 shadow-xl">
-    <div class="card-body gap-4 p-4">
-      <h2 class="card-title text-base">Filtres</h2>
+  <aside class="min-h-full w-80 bg-base-100 shadow-xl">
+    <div class="flex flex-col gap-4 p-4">
+      <h2 class="text-base font-semibold">Filtres</h2>
 
       <fieldset class="fieldset">
         <legend class="fieldset-legend">Type de bien</legend>
@@ -88,15 +88,3 @@ watch([showAppartement, showMaison, yearMin, yearMax], () => {
   };
 });
 </script>
-
-<style scoped>
-.filter-panel {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  z-index: 1000;
-  width: 16rem;
-  max-height: calc(100vh - 2rem);
-  overflow-y: auto;
-}
-</style>
