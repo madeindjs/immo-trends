@@ -3,10 +3,15 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "index.js",
+  "private": true,
   "scripts": {
+    "build": "nuxt build",
+    "dev": "TMPDIR=/tmp nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
     "clean": "rm -f data/ && rm -f dvf.sqlite3",
-    "draw": "node draw.ts",
+    "draw": "node scripts/draw.ts",
     "test": "node *.spec.ts",
     "test:watch": "node --watch *.spec.ts"
   },
@@ -16,8 +21,11 @@
   "dependencies": {
     "chart.js": "^4.4.8",
     "chartjs-node-canvas": "^5.0.0",
+    "nuxt": "^4.4.7",
     "p-limit": "^4.0.0",
     "progress": "^2.0.3",
-    "single-line-log": "^1.1.2"
+    "single-line-log": "^1.1.2",
+    "vue": "^3.5.35",
+    "vue-router": "^5.1.0"
   }
 }

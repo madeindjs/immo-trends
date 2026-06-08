@@ -2,11 +2,12 @@ import { ChartJSNodeCanvas } from "chartjs-node-canvas";
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import type { DvfRow } from "./types.ts";
-import { getMedian, getPriceStats, calculatePricePerSqm } from "./draw.utils.ts";
+import type { DvfRow } from "../types.ts";
+import { getPriceStats, calculatePricePerSqm } from "./draw.utils.ts";
 
-const dbPath = path.join(import.meta.dirname, "dvf.sqlite3");
-const graphsFolder = path.join(import.meta.dirname, "graphs");
+const rootDir = path.join(import.meta.dirname, "..");
+const dbPath = path.join(rootDir, "dvf.sqlite3");
+const graphsFolder = path.join(rootDir, "graphs");
 
 // Create output directories if they don't exist
 fs.mkdirSync(graphsFolder, { recursive: true });
@@ -56,7 +57,7 @@ async function drawGraph(): Promise<void> {
 
   if (zipCodes.length === 0) {
     console.error(
-      "Please specify zip codes as arguments, e.g.: node draw.ts 69001 69002",
+      "Please specify zip codes as arguments, e.g.: npm run draw -- 69001 69002",
     );
     db.close();
     return;
@@ -87,7 +88,9 @@ async function drawGraph(): Promise<void> {
       const rows = getPricesStmt.all(zipCode, year) as PriceRow[];
 
       const prices: number[] = rows
-        .map((row) => calculatePricePerSqm(row.valeur_fonciere, row.surface_reelle_bati))
+        .map((row) =>
+          calculatePricePerSqm(row.valeur_fonciere, row.surface_reelle_bati),
+        )
         .filter((p): p is number => p != null);
 
       const stats = getPriceStats(prices);

@@ -1,8 +1,30 @@
+# Nuxt dev/build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
+
 node_modules
 graphs
 dvf.sqlite3
 dvf.sqlite3*
 data/
+
+# Logs
+logs
+*.log
+
+# Misc
+.DS_Store
+.fleet
+.idea
+
+# Local env files
+.env
+.env.*
+!.env.example
 
 # Do NOT ignore test-data folder - it contains committed test fixtures
 !test-data/

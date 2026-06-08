@@ -23,10 +23,32 @@ Cela télécharge automatiquement les fichiers CSV, les décompresse dans le dos
 Ensuite générez le graphique en spécifiant les codes postaux (le schéma de la base est défini dans `init.sql`) :
 
 ```sh
-node draw.js 69001 69002 69003 69004 69005 69006 69007 69008 69009 69740
+npm run draw -- 69001 69002 69003 69004 69005 69006 69007 69008 69009 69740
 ```
 
 Les statistiques (médiane, moyenne, min, max) sont calculées à la volée par SQLite.
+
+## Interface web (Nuxt)
+
+Ce dépôt inclut une application [Nuxt 4](https://nuxt.com/docs/4.x/getting-started/installation) dans le dossier `app/`.
+
+Lancer le serveur de développement :
+
+```sh
+npm run dev
+```
+
+Ouvrir [http://localhost:3000](http://localhost:3000) dans le navigateur.
+
+> **macOS** : Nuxt 4.4.7 place le socket vite-node dans un chemin temporaire qui peut dépasser la limite de 104 caractères du système. Le script `dev` utilise `TMPDIR=/tmp` pour contourner ce problème ([nuxt/nuxt#35264](https://github.com/nuxt/nuxt/issues/35264)).
+
+Autres commandes utiles :
+
+```sh
+npm run build     # build de production
+npm run preview   # prévisualiser le build
+npm run generate  # génération statique
+```
 
 ## Base de données
 
@@ -44,4 +66,5 @@ npm run clean
 
 - [x] automatiser le téléchargement des données
 - [x] utiliser SQLite pour le stockage et les calculs
+- [x] ajouter une interface web Nuxt
 - [ ] réaliser des statistiques plus profondes
