@@ -15,8 +15,14 @@
         />
       </LMap>
 
-      <div v-if="statusMessage" class="map-status">
-        {{ statusMessage }}
+      <div v-if="statusToast" class="toast toast-bottom toast-end z-[1000]">
+        <div :class="['alert', statusToast.alertClass]">
+          <span
+            v-if="statusToast.showSpinner"
+            class="loading loading-spinner loading-sm"
+          />
+          <span>{{ statusToast.message }}</span>
+        </div>
       </div>
     </div>
   </ClientOnly>
@@ -193,28 +199,53 @@ async function renderPoints(): Promise<void> {
   dvfLayer.value.addTo(map);
 }
 
-const statusMessage = computed(() => {
+type StatusToast = {
+  message: string;
+  alertClass: string;
+  showSpinner?: boolean;
+};
+
+const statusToast = computed((): StatusToast | null => {
   if (loading.value) {
-    return "Chargement des transactions DVF…";
+    return {
+      message: "Chargement des transactions DVF…",
+      alertClass: "alert-info",
+      showSpinner: true,
+    };
   }
 
   if (error.value) {
-    return error.value;
+    return {
+      message: error.value,
+      alertClass: "alert-error",
+    };
   }
 
   if ((mapInstance.value?.getZoom() ?? zoom.value) < MIN_FETCH_ZOOM) {
-    return "Zoomez pour afficher les transactions DVF.";
+    return {
+      message: "Zoomez pour afficher les transactions DVF.",
+      alertClass: "alert-warning",
+    };
   }
 
   if (truncated.value) {
-    return `${points.value.length} transactions affichées (résultats tronqués).`;
+    return {
+      message: `${points.value.length} transactions affichées (résultats tronqués).`,
+      alertClass: "alert-success",
+    };
   }
 
   if (points.value.length > 0) {
-    return `${points.value.length} transactions affichées.`;
+    return {
+      message: `${points.value.length} transactions affichées.`,
+      alertClass: "alert-success",
+    };
   }
 
-  return "Aucune transaction DVF dans cette zone.";
+  return {
+    message: "Aucune transaction DVF dans cette zone.",
+    alertClass: "alert-info",
+  };
 });
 
 function refreshPoints(): void {
@@ -279,19 +310,5 @@ body,
   height: 100vh;
   width: 100vw;
   position: relative;
-}
-
-.map-status {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 1000;
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.92);
-  color: #1f2937;
-  font: 14px/1.4 system-ui, sans-serif;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-  max-width: min(360px, calc(100vw - 24px));
 }
 </style>
