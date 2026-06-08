@@ -216,6 +216,10 @@ const filters = ref<DvfPointFilters>({
   typeLocals: ["Appartement", "Maison"],
   yearMin: 2014,
   yearMax: new Date().getFullYear(),
+  surfaceMin: null,
+  surfaceMax: null,
+  pricePerSqmMin: null,
+  pricePerSqmMax: null,
 });
 const statsPanelCollapsed = ref(loadStatsPanelCollapsed());
 const hoveredTrendYear = ref<number | null>(null);
@@ -237,10 +241,33 @@ const zoomTooLowForData = computed(
 );
 
 function filtersAreValid(): boolean {
-  return (
-    filters.value.typeLocals.length > 0 &&
-    filters.value.yearMin <= filters.value.yearMax
-  );
+  const {
+    typeLocals,
+    yearMin,
+    yearMax,
+    surfaceMin,
+    surfaceMax,
+    pricePerSqmMin,
+    pricePerSqmMax,
+  } = filters.value;
+
+  if (typeLocals.length === 0 || yearMin > yearMax) {
+    return false;
+  }
+
+  if (surfaceMin != null && surfaceMax != null && surfaceMin > surfaceMax) {
+    return false;
+  }
+
+  if (
+    pricePerSqmMin != null &&
+    pricePerSqmMax != null &&
+    pricePerSqmMin > pricePerSqmMax
+  ) {
+    return false;
+  }
+
+  return true;
 }
 
 function getMutationYear(dateMutation: string): number {

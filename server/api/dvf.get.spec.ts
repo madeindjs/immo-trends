@@ -125,6 +125,54 @@ describe("parseDvfQuery", () => {
       /year_min must be less than or equal to year_max/,
     );
   });
+
+  it("parses surface and price-per-sqm filters", () => {
+    const result = parseDvfQuery({
+      north: "46.5",
+      south: "46.2",
+      east: "5.5",
+      west: "5.0",
+      surface_min: "50",
+      surface_max: "120",
+      price_per_sqm_min: "2000",
+      price_per_sqm_max: "3000",
+    });
+
+    assert.strictEqual(result.filters.surfaceMin, 50);
+    assert.strictEqual(result.filters.surfaceMax, 120);
+    assert.strictEqual(result.filters.pricePerSqmMin, 2000);
+    assert.strictEqual(result.filters.pricePerSqmMax, 3000);
+  });
+
+  it("rejects inverted surface range", () => {
+    assert.throws(
+      () =>
+        parseDvfQuery({
+          north: "46.5",
+          south: "46.2",
+          east: "5.5",
+          west: "5.0",
+          surface_min: "120",
+          surface_max: "50",
+        }),
+      /surface_min must be less than or equal to surface_max/,
+    );
+  });
+
+  it("rejects inverted price-per-sqm range", () => {
+    assert.throws(
+      () =>
+        parseDvfQuery({
+          north: "46.5",
+          south: "46.2",
+          east: "5.5",
+          west: "5.0",
+          price_per_sqm_min: "3000",
+          price_per_sqm_max: "2000",
+        }),
+      /price_per_sqm_min must be less than or equal to price_per_sqm_max/,
+    );
+  });
 });
 
 describe("queryDvfInBounds", () => {
@@ -268,6 +316,52 @@ describe("queryDvfInBounds", () => {
 
     assert.strictEqual(result.points.length, 1);
     assert.strictEqual(result.truncated, true);
+  });
+
+  it("filters by surface range", () => {
+    const result = queryDvfInBounds(
+      {
+        north: 46.33,
+        south: 46.32,
+        east: 5.39,
+        west: 5.38,
+      },
+      { limit: 2000, surfaceMin: 95, surfaceMax: 100 },
+      dbPath,
+    );
+
+    assert.ok(result.points.length > 0);
+    assert.ok(
+      result.points.every(
+        (point) =>
+          point.surface_reelle_bati != null &&
+          point.surface_reelle_bati >= 95 &&
+          point.surface_reelle_bati <= 100,
+      ),
+    );
+  });
+
+  it("filters by price per sqm range", () => {
+    const result = queryDvfInBounds(
+      {
+        north: 47.0,
+        south: 46.0,
+        east: 6.0,
+        west: 4.0,
+      },
+      {
+        limit: 2000,
+        typeLocals: ["Appartement"],
+        yearMin: "2021",
+        yearMax: "2021",
+        pricePerSqmMin: 2400,
+        pricePerSqmMax: 2500,
+      },
+      dbPath,
+    );
+
+    assert.ok(result.points.length > 0);
+    assert.ok(result.points.every((point) => point.type_local === "Appartement"));
   });
 });
 

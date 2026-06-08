@@ -17,6 +17,10 @@ Returns DVF transaction points for the current map bounding box.
 | `year` | no | Filter by mutation year (`YYYY`). Sets both `year_min` and `year_max` |
 | `year_min` | no | Earliest mutation year (`YYYY`) |
 | `year_max` | no | Latest mutation year (`YYYY`) |
+| `surface_min` | no | Minimum built surface in m² (`surface_reelle_bati`) |
+| `surface_max` | no | Maximum built surface in m² (`surface_reelle_bati`) |
+| `price_per_sqm_min` | no | Minimum price per m² in € (`valeur_fonciere / surface_reelle_bati`) |
+| `price_per_sqm_max` | no | Maximum price per m² in € (`valeur_fonciere / surface_reelle_bati`) |
 
 ### Response
 
@@ -78,6 +82,10 @@ Returns yearly price-per-m² trends for the current map bounding box.
 | `year` | no | Filter by mutation year (`YYYY`). Sets both `year_min` and `year_max` |
 | `year_min` | no | Earliest mutation year (`YYYY`) |
 | `year_max` | no | Latest mutation year (`YYYY`) |
+| `surface_min` | no | Minimum built surface in m² (`surface_reelle_bati`) |
+| `surface_max` | no | Maximum built surface in m² (`surface_reelle_bati`) |
+| `price_per_sqm_min` | no | Minimum price per m² in € (`valeur_fonciere / surface_reelle_bati`) |
+| `price_per_sqm_max` | no | Maximum price per m² in € (`valeur_fonciere / surface_reelle_bati`) |
 
 ### Response
 

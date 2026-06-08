@@ -15,6 +15,10 @@ export type DvfQueryParams = {
   year?: string | string[] | undefined;
   year_min?: string | string[] | undefined;
   year_max?: string | string[] | undefined;
+  surface_min?: string | string[] | undefined;
+  surface_max?: string | string[] | undefined;
+  price_per_sqm_min?: string | string[] | undefined;
+  price_per_sqm_max?: string | string[] | undefined;
 };
 
 function firstValue(value: string | string[] | undefined): string | undefined {
@@ -96,6 +100,36 @@ function parseOptionalTypeLocals(
   return parsed;
 }
 
+function parseOptionalPositiveNumber(
+  name: string,
+  value: string | string[] | undefined,
+): number | undefined {
+  const raw = firstValue(value);
+  if (raw === undefined || raw === "") {
+    return undefined;
+  }
+
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`Invalid numeric parameter: ${name}`);
+  }
+
+  return parsed;
+}
+
+function assertRangeOrder(
+  minName: string,
+  maxName: string,
+  min: number | undefined,
+  max: number | undefined,
+): void {
+  if (min != null && max != null && min > max) {
+    throw new Error(
+      `Invalid range: ${minName} must be less than or equal to ${maxName}`,
+    );
+  }
+}
+
 export function parseDvfQuery(
   query: DvfQueryParams,
 ): { bounds: DvfBounds; filters: DvfQueryFilters } {
@@ -120,6 +154,31 @@ export function parseDvfQuery(
     throw new Error("Invalid year range: year_min must be less than or equal to year_max");
   }
 
+  const surfaceMin = parseOptionalPositiveNumber(
+    "surface_min",
+    query.surface_min,
+  );
+  const surfaceMax = parseOptionalPositiveNumber(
+    "surface_max",
+    query.surface_max,
+  );
+  const pricePerSqmMin = parseOptionalPositiveNumber(
+    "price_per_sqm_min",
+    query.price_per_sqm_min,
+  );
+  const pricePerSqmMax = parseOptionalPositiveNumber(
+    "price_per_sqm_max",
+    query.price_per_sqm_max,
+  );
+
+  assertRangeOrder("surface_min", "surface_max", surfaceMin, surfaceMax);
+  assertRangeOrder(
+    "price_per_sqm_min",
+    "price_per_sqm_max",
+    pricePerSqmMin,
+    pricePerSqmMax,
+  );
+
   return {
     bounds: { north, south, east, west },
     filters: {
@@ -127,6 +186,10 @@ export function parseDvfQuery(
       typeLocals: parseOptionalTypeLocals(query.type_local),
       yearMin,
       yearMax,
+      surfaceMin,
+      surfaceMax,
+      pricePerSqmMin,
+      pricePerSqmMax,
     },
   };
 }

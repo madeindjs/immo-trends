@@ -19,6 +19,10 @@ export type DvfQueryFilters = {
   typeLocals?: string[];
   yearMin?: string;
   yearMax?: string;
+  surfaceMin?: number;
+  surfaceMax?: number;
+  pricePerSqmMin?: number;
+  pricePerSqmMax?: number;
   limit: number;
 };
 
@@ -50,9 +54,20 @@ type DvfPricePerSqmRow = {
   price_per_sqm: number;
 };
 
+type DvfSpatialFilters = Pick<
+  DvfQueryFilters,
+  | "typeLocals"
+  | "yearMin"
+  | "yearMax"
+  | "surfaceMin"
+  | "surfaceMax"
+  | "pricePerSqmMin"
+  | "pricePerSqmMax"
+>;
+
 function buildWhereClause(
   bounds: DvfBounds,
-  filters: Pick<DvfQueryFilters, "typeLocals" | "yearMin" | "yearMax">,
+  filters: DvfSpatialFilters,
 ): { conditions: string[]; params: Array<string | number> } {
   const conditions = [
     "latitude BETWEEN ? AND ?",
@@ -83,13 +98,42 @@ function buildWhereClause(
     params.push(`${filters.yearMax}-12-31`);
   }
 
+  if (filters.surfaceMin != null) {
+    conditions.push("surface_reelle_bati >= ?");
+    params.push(filters.surfaceMin);
+  }
+
+  if (filters.surfaceMax != null) {
+    conditions.push("surface_reelle_bati <= ?");
+    params.push(filters.surfaceMax);
+  }
+
+  if (filters.pricePerSqmMin != null || filters.pricePerSqmMax != null) {
+    conditions.push("surface_reelle_bati > 0");
+    conditions.push("CAST(valeur_fonciere AS REAL) > 0");
+
+    if (filters.pricePerSqmMin != null) {
+      conditions.push(
+        "CAST(valeur_fonciere AS REAL) / surface_reelle_bati >= ?",
+      );
+      params.push(filters.pricePerSqmMin);
+    }
+
+    if (filters.pricePerSqmMax != null) {
+      conditions.push(
+        "CAST(valeur_fonciere AS REAL) / surface_reelle_bati <= ?",
+      );
+      params.push(filters.pricePerSqmMax);
+    }
+  }
+
   return { conditions, params };
 }
 
 function queryPricePerSqmStats(
   db: DatabaseSync,
   bounds: DvfBounds,
-  filters: Pick<DvfQueryFilters, "typeLocals" | "yearMin" | "yearMax">,
+  filters: DvfSpatialFilters,
 ): DvfMapStats {
   const { conditions, params } = buildWhereClause(bounds, filters);
 
@@ -130,7 +174,7 @@ type DvfTrendPriceRow = {
 
 export function queryDvfPriceTrends(
   bounds: DvfBounds,
-  filters: Pick<DvfQueryFilters, "typeLocals" | "yearMin" | "yearMax">,
+  filters: DvfSpatialFilters,
   dbPath: string = defaultDbPath,
 ): DvfPriceTrendPoint[] {
   const db = new DatabaseSync(dbPath);

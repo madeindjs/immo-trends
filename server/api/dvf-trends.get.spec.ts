@@ -131,4 +131,40 @@ describe("queryDvfPriceTrends", () => {
 
     assert.deepStrictEqual(trends, []);
   });
+
+  it("filters trends by surface and price per sqm", () => {
+    const unfiltered = queryDvfPriceTrends(
+      {
+        north: 47.0,
+        south: 46.0,
+        east: 6.0,
+        west: 4.0,
+      },
+      { typeLocals: ["Maison"], yearMin: "2021", yearMax: "2021" },
+      dbPath,
+    );
+
+    const filtered = queryDvfPriceTrends(
+      {
+        north: 47.0,
+        south: 46.0,
+        east: 6.0,
+        west: 4.0,
+      },
+      {
+        typeLocals: ["Maison"],
+        yearMin: "2021",
+        yearMax: "2021",
+        surfaceMin: 95,
+        surfaceMax: 100,
+      },
+      dbPath,
+    );
+
+    assert.ok(filtered.length > 0);
+    assert.notStrictEqual(
+      filtered[0]?.count,
+      unfiltered.find((point) => point.year === 2021)?.count,
+    );
+  });
 });

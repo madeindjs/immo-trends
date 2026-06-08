@@ -18,5 +18,21 @@ export function buildDvfQueryParams(
     query.type_local = filters.typeLocals;
   }
 
+  if (filters.surfaceMin != null) {
+    query.surface_min = filters.surfaceMin;
+  }
+
+  if (filters.surfaceMax != null) {
+    query.surface_max = filters.surfaceMax;
+  }
+
+  if (filters.pricePerSqmMin != null) {
+    query.price_per_sqm_min = filters.pricePerSqmMin;
+  }
+
+  if (filters.pricePerSqmMax != null) {
+    query.price_per_sqm_max = filters.pricePerSqmMax;
+  }
+
   return query;
 }

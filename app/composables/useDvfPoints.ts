@@ -21,6 +21,10 @@ export type DvfPointFilters = {
   typeLocals: string[];
   yearMin: number;
   yearMax: number;
+  surfaceMin: number | null;
+  surfaceMax: number | null;
+  pricePerSqmMin: number | null;
+  pricePerSqmMax: number | null;
 };
 
 function isAbortError(error: unknown): boolean {
