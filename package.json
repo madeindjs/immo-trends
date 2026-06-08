@@ -12,8 +12,8 @@
     "postinstall": "nuxt prepare",
     "clean": "rm -f data/ && rm -f dvf.sqlite3",
     "draw": "node scripts/draw.ts",
-    "test": "node *.spec.ts",
-    "test:watch": "node --watch *.spec.ts"
+    "test": "node --experimental-strip-types --test \"**/*.spec.ts\"",
+    "test:watch": "node --experimental-strip-types --watch --test \"**/*.spec.ts\""
   },
   "keywords": [],
   "author": "",

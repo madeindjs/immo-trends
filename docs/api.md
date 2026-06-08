@@ -1,0 +1,54 @@
+# API
+
+## `GET /api/dvf`
+
+Returns DVF transaction points for the current map bounding box.
+
+### Query parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `north` | yes | Northern latitude bound (WGS-84) |
+| `south` | yes | Southern latitude bound (WGS-84) |
+| `east` | yes | Eastern longitude bound (WGS-84) |
+| `west` | yes | Western longitude bound (WGS-84) |
+| `limit` | no | Maximum number of points to return. Default: `2000`. Max: `5000`. |
+| `type_local` | no | Filter by property type, e.g. `Appartement`, `Maison` |
+| `year` | no | Filter by mutation year (`YYYY`) |
+
+### Response
+
+```json
+{
+  "points": [
+    {
+      "id_mutation": "2021-1",
+      "date_mutation": "2021-01-05",
+      "valeur_fonciere": "185000",
+      "type_local": "Maison",
+      "surface_reelle_bati": 97,
+      "code_postal": "01370",
+      "nom_commune": "Val-Revermont",
+      "adresse_nom_voie": "CHE DE VOGELAS",
+      "latitude": 46.327101,
+      "longitude": 5.386107
+    }
+  ],
+  "truncated": false
+}
+```
+
+`truncated` is `true` when the number of returned points equals the requested `limit`, meaning more transactions may exist in the bounding box.
+
+### Errors
+
+| Status | Meaning |
+|--------|---------|
+| `400` | Missing or invalid query parameters |
+| `503` | `dvf.sqlite3` is missing. Run `./init.sh` first. |
+
+### Example
+
+```sh
+curl "http://localhost:3000/api/dvf?north=46.5&south=46.2&east=5.5&west=5.0&type_local=Maison&year=2021"
+```

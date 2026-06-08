@@ -84,3 +84,17 @@ export interface DvfRow {
   /** Latitude du centre de la parcelle concernée (WGS-84) */
   latitude: number;
 }
+
+/** Lightweight DVF point returned by the map API. */
+export type DvfMapPoint = {
+  id_mutation: string;
+  date_mutation: string;
+  valeur_fonciere: string;
+  type_local: string;
+  surface_reelle_bati: number | null;
+  code_postal: string;
+  nom_commune: string;
+  adresse_nom_voie: string;
+  latitude: number;
+  longitude: number;
+};

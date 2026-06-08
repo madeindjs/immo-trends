@@ -14,12 +14,21 @@
           name="OpenStreetMap"
         />
       </LMap>
+
+      <div v-if="statusMessage" class="map-status">
+        {{ statusMessage }}
+      </div>
     </div>
   </ClientOnly>
 </template>
 
 <script setup lang="ts">
-import type { Map } from "leaflet";
+import type { Feature, FeatureCollection, Point } from "geojson";
+import type { GeoJSON, Map } from "leaflet";
+import { MIN_FETCH_ZOOM } from "./composables/useDvfPoints.ts";
+import type { DvfMapPoint } from "../types.ts";
+
+type LeafletModule = typeof import("leaflet/dist/leaflet-src.esm");
 
 const STORAGE_KEY = "immo-trends.map";
 const DEFAULT_ZOOM = 6;
@@ -28,6 +37,17 @@ const DEFAULT_CENTER: [number, number] = [46.6, 2.4];
 type MapViewState = {
   zoom: number;
   center: [number, number];
+};
+
+type DvfFeatureProperties = {
+  id_mutation: string;
+  date_mutation: string;
+  valeur_fonciere: string;
+  type_local: string;
+  surface_reelle_bati: number | null;
+  code_postal: string;
+  nom_commune: string;
+  adresse_nom_voie: string;
 };
 
 function loadMapView(): MapViewState {
@@ -59,9 +79,163 @@ function saveMapView(state: MapViewState): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+function formatPrice(value: string): string {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) {
+    return value;
+  }
+
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function toFeature(point: DvfMapPoint): Feature<Point, DvfFeatureProperties> {
+  return {
+    type: "Feature",
+    geometry: {
+      type: "Point",
+      coordinates: [point.longitude, point.latitude],
+    },
+    properties: {
+      id_mutation: point.id_mutation,
+      date_mutation: point.date_mutation,
+      valeur_fonciere: point.valeur_fonciere,
+      type_local: point.type_local,
+      surface_reelle_bati: point.surface_reelle_bati,
+      code_postal: point.code_postal,
+      nom_commune: point.nom_commune,
+      adresse_nom_voie: point.adresse_nom_voie,
+    },
+  };
+}
+
+function buildPopupContent(properties: DvfFeatureProperties): string {
+  const surface =
+    properties.surface_reelle_bati === null
+      ? "—"
+      : `${properties.surface_reelle_bati} m²`;
+
+  return [
+    `<strong>${formatPrice(properties.valeur_fonciere)}</strong>`,
+    properties.date_mutation,
+    properties.type_local || "—",
+    properties.adresse_nom_voie || "—",
+    `${properties.code_postal} ${properties.nom_commune}`,
+    `Surface: ${surface}`,
+  ].join("<br>");
+}
+
 const mapReady = ref(false);
 const zoom = ref(DEFAULT_ZOOM);
 const center = ref<[number, number]>(DEFAULT_CENTER);
+const mapInstance = shallowRef<Map | null>(null);
+const leafletModule = shallowRef<LeafletModule | null>(null);
+const dvfLayer = shallowRef<GeoJSON | null>(null);
+
+const { points, loading, error, truncated, cancelPending, scheduleFetch } =
+  useDvfPoints();
+
+function buildFeatureCollection(): FeatureCollection<
+  Point,
+  DvfFeatureProperties
+> {
+  return {
+    type: "FeatureCollection",
+    features: points.value.map(toFeature),
+  };
+}
+
+async function getLeaflet(): Promise<LeafletModule> {
+  if (!leafletModule.value) {
+    leafletModule.value = await import("leaflet/dist/leaflet-src.esm");
+  }
+
+  return leafletModule.value;
+}
+
+async function renderPoints(): Promise<void> {
+  const map = mapInstance.value;
+  if (!map) {
+    return;
+  }
+
+  const L = await getLeaflet();
+
+  if (dvfLayer.value) {
+    map.removeLayer(dvfLayer.value);
+    dvfLayer.value = null;
+  }
+
+  if (points.value.length === 0) {
+    return;
+  }
+
+  dvfLayer.value = L.geoJSON(buildFeatureCollection(), {
+    pointToLayer(_feature, latlng) {
+      return L.circleMarker(latlng, {
+        radius: 5,
+        color: "#1d4ed8",
+        weight: 1,
+        fillColor: "#3b82f6",
+        fillOpacity: 0.8,
+      });
+    },
+    onEachFeature(feature, layer) {
+      layer.bindPopup(
+        buildPopupContent(feature.properties as DvfFeatureProperties),
+      );
+    },
+  });
+
+  dvfLayer.value.addTo(map);
+}
+
+const statusMessage = computed(() => {
+  if (loading.value) {
+    return "Chargement des transactions DVF…";
+  }
+
+  if (error.value) {
+    return error.value;
+  }
+
+  if ((mapInstance.value?.getZoom() ?? zoom.value) < MIN_FETCH_ZOOM) {
+    return "Zoomez pour afficher les transactions DVF.";
+  }
+
+  if (truncated.value) {
+    return `${points.value.length} transactions affichées (résultats tronqués).`;
+  }
+
+  if (points.value.length > 0) {
+    return `${points.value.length} transactions affichées.`;
+  }
+
+  return "Aucune transaction DVF dans cette zone.";
+});
+
+function refreshPoints(): void {
+  const map = mapInstance.value;
+  if (!map) {
+    return;
+  }
+
+  scheduleFetch(map.getBounds(), map.getZoom());
+}
+
+watch(points, () => {
+  void renderPoints();
+});
+
+onBeforeUnmount(() => {
+  const map = mapInstance.value;
+  if (map && dvfLayer.value) {
+    map.removeLayer(dvfLayer.value);
+  }
+});
 
 onMounted(() => {
   const saved = loadMapView();
@@ -71,13 +245,23 @@ onMounted(() => {
 });
 
 function onMapReady(map: Map): void {
-  map.on("moveend", () => {
+  mapInstance.value = map;
+
+  const handleViewportChange = () => {
     const { lat, lng } = map.getCenter();
     saveMapView({
       zoom: map.getZoom(),
       center: [lat, lng],
     });
-  });
+    refreshPoints();
+  };
+
+  map.on("movestart", cancelPending);
+  map.on("zoomstart", cancelPending);
+  map.on("moveend", handleViewportChange);
+  map.on("zoomend", handleViewportChange);
+  refreshPoints();
+  void renderPoints();
 }
 </script>
 
@@ -94,5 +278,20 @@ body,
 .map {
   height: 100vh;
   width: 100vw;
+  position: relative;
+}
+
+.map-status {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1000;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1f2937;
+  font: 14px/1.4 system-ui, sans-serif;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  max-width: min(360px, calc(100vw - 24px));
 }
 </style>
