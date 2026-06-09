@@ -23,6 +23,8 @@ export type DvfPointFilters = {
   yearMax: number;
   surfaceMin: number | null;
   surfaceMax: number | null;
+  surfaceTerrainMin: number | null;
+  surfaceTerrainMax: number | null;
   pricePerSqmMin: number | null;
   pricePerSqmMax: number | null;
 };

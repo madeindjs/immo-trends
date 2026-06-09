@@ -6,6 +6,7 @@ export type DvfPopupProperties = {
   valeur_fonciere: string;
   type_local: string;
   surface_reelle_bati: number | null;
+  surface_terrain: number | null;
   nombre_pieces_principales: number | null;
   code_postal: string;
   nom_commune: string;
@@ -53,6 +54,10 @@ export function buildDvfPopupContent(properties: DvfPopupProperties): string {
     `Surface: ${formatSurface(properties.surface_reelle_bati)}`,
     `Pièces: ${formatRooms(properties.nombre_pieces_principales)}`,
   ];
+
+  if (properties.surface_terrain != null && properties.surface_terrain > 0) {
+    lines.push(`Terrain: ${formatSurface(properties.surface_terrain)}`);
+  }
 
   return `<div class="dvf-popup">${lines.join("<br>")}</div>`;
 }

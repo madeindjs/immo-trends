@@ -9,6 +9,7 @@ describe("buildDvfPopupContent", () => {
       valeur_fonciere: "185000",
       type_local: "Maison",
       surface_reelle_bati: 97,
+      surface_terrain: 2410,
       nombre_pieces_principales: 5,
       code_postal: "01370",
       nom_commune: "Val-Revermont",
@@ -21,6 +22,25 @@ describe("buildDvfPopupContent", () => {
     assert.match(html, /5 janvier 2021/);
     assert.match(html, /5080 CHE DE VOGELAS/);
     assert.match(html, /Pièces: 5/);
+    assert.match(html, /Terrain: 2410 m²/);
     assert.match(html, /class="dvf-popup"/);
+  });
+
+  it("omits terrain surface when unset or zero", () => {
+    const html = buildDvfPopupContent({
+      date_mutation: "2021-01-05",
+      valeur_fonciere: "185000",
+      type_local: "Maison",
+      surface_reelle_bati: 97,
+      surface_terrain: 0,
+      nombre_pieces_principales: 5,
+      code_postal: "01370",
+      nom_commune: "Val-Revermont",
+      adresse_numero: "5080",
+      adresse_suffixe: "",
+      adresse_nom_voie: "CHE DE VOGELAS",
+    });
+
+    assert.doesNotMatch(html, /Terrain:/);
   });
 });

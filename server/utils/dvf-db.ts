@@ -22,6 +22,8 @@ export type DvfQueryFilters = {
   yearMax?: string;
   surfaceMin?: number;
   surfaceMax?: number;
+  surfaceTerrainMin?: number;
+  surfaceTerrainMax?: number;
   pricePerSqmMin?: number;
   pricePerSqmMax?: number;
   limit: number;
@@ -45,6 +47,7 @@ type DvfMapPointRow = {
   valeur_fonciere: string;
   type_local: string;
   surface_reelle_bati: number | null;
+  surface_terrain: number | null;
   nombre_pieces_principales: number | null;
   code_postal: string;
   nom_commune: string;
@@ -66,6 +69,8 @@ type DvfSpatialFilters = Pick<
   | "yearMax"
   | "surfaceMin"
   | "surfaceMax"
+  | "surfaceTerrainMin"
+  | "surfaceTerrainMax"
   | "pricePerSqmMin"
   | "pricePerSqmMax"
 >;
@@ -111,6 +116,16 @@ function buildWhereClause(
   if (filters.surfaceMax != null) {
     conditions.push("surface_reelle_bati <= ?");
     params.push(filters.surfaceMax);
+  }
+
+  if (filters.surfaceTerrainMin != null) {
+    conditions.push("surface_terrain >= ?");
+    params.push(filters.surfaceTerrainMin);
+  }
+
+  if (filters.surfaceTerrainMax != null) {
+    conditions.push("surface_terrain <= ?");
+    params.push(filters.surfaceTerrainMax);
   }
 
   if (filters.pricePerSqmMin != null || filters.pricePerSqmMax != null) {
@@ -249,6 +264,7 @@ export function queryDvfInBounds(
         valeur_fonciere,
         type_local,
         surface_reelle_bati,
+        surface_terrain,
         nombre_pieces_principales,
         code_postal,
         nom_commune,

@@ -129,6 +129,7 @@ type DvfFeatureProperties = {
   valeur_fonciere: string;
   type_local: string;
   surface_reelle_bati: number | null;
+  surface_terrain: number | null;
   nombre_pieces_principales: number | null;
   code_postal: string;
   nom_commune: string;
@@ -151,6 +152,7 @@ function toFeature(point: DvfMapPoint): Feature<Point, DvfFeatureProperties> {
       valeur_fonciere: point.valeur_fonciere,
       type_local: point.type_local,
       surface_reelle_bati: point.surface_reelle_bati,
+      surface_terrain: point.surface_terrain,
       nombre_pieces_principales: point.nombre_pieces_principales,
       code_postal: point.code_postal,
       nom_commune: point.nom_commune,
@@ -249,6 +251,8 @@ function filtersAreValid(): boolean {
     yearMax,
     surfaceMin,
     surfaceMax,
+    surfaceTerrainMin,
+    surfaceTerrainMax,
     pricePerSqmMin,
     pricePerSqmMax,
   } = filters.value;
@@ -258,6 +262,14 @@ function filtersAreValid(): boolean {
   }
 
   if (surfaceMin != null && surfaceMax != null && surfaceMin > surfaceMax) {
+    return false;
+  }
+
+  if (
+    surfaceTerrainMin != null &&
+    surfaceTerrainMax != null &&
+    surfaceTerrainMin > surfaceTerrainMax
+  ) {
     return false;
   }
 

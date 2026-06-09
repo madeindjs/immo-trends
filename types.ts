@@ -118,6 +118,7 @@ export type DvfMapPoint = {
   valeur_fonciere: string;
   type_local: string;
   surface_reelle_bati: number | null;
+  surface_terrain: number | null;
   nombre_pieces_principales: number | null;
   code_postal: string;
   nom_commune: string;

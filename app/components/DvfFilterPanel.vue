@@ -76,6 +76,32 @@
       </fieldset>
 
       <fieldset class="fieldset">
+        <legend class="fieldset-legend">Surface du terrain (m²)</legend>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="form-control">
+            <span class="label-text mb-1">De</span>
+            <input
+              v-model.number="surfaceTerrainMin"
+              type="number"
+              class="input input-bordered input-sm w-full"
+              min="0"
+              placeholder="Min"
+            />
+          </label>
+          <label class="form-control">
+            <span class="label-text mb-1">À</span>
+            <input
+              v-model.number="surfaceTerrainMax"
+              type="number"
+              class="input input-bordered input-sm w-full"
+              min="0"
+              placeholder="Max"
+            />
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset class="fieldset">
         <legend class="fieldset-legend">Prix au m² (€)</legend>
         <div class="grid grid-cols-2 gap-3">
           <label class="form-control">
@@ -114,6 +140,12 @@
         La surface minimale doit être inférieure ou égale à la surface maximale.
       </p>
       <p
+        v-else-if="surfaceTerrainMin != null && surfaceTerrainMax != null && surfaceTerrainMin > surfaceTerrainMax"
+        class="text-sm text-warning"
+      >
+        La surface de terrain minimale doit être inférieure ou égale à la surface de terrain maximale.
+      </p>
+      <p
         v-else-if="pricePerSqmMin != null && pricePerSqmMax != null && pricePerSqmMin > pricePerSqmMax"
         class="text-sm text-warning"
       >
@@ -137,6 +169,8 @@ const yearMin = ref(filters.value.yearMin);
 const yearMax = ref(filters.value.yearMax);
 const surfaceMin = ref(filters.value.surfaceMin);
 const surfaceMax = ref(filters.value.surfaceMax);
+const surfaceTerrainMin = ref(filters.value.surfaceTerrainMin);
+const surfaceTerrainMax = ref(filters.value.surfaceTerrainMax);
 const pricePerSqmMin = ref(filters.value.pricePerSqmMin);
 const pricePerSqmMax = ref(filters.value.pricePerSqmMax);
 
@@ -154,6 +188,8 @@ function syncPanelFromModel(nextFilters: DvfPointFilters): void {
   yearMax.value = nextFilters.yearMax;
   surfaceMin.value = nextFilters.surfaceMin;
   surfaceMax.value = nextFilters.surfaceMax;
+  surfaceTerrainMin.value = nextFilters.surfaceTerrainMin;
+  surfaceTerrainMax.value = nextFilters.surfaceTerrainMax;
   pricePerSqmMin.value = nextFilters.pricePerSqmMin;
   pricePerSqmMax.value = nextFilters.pricePerSqmMax;
   nextTick(() => {
@@ -177,6 +213,8 @@ watch(
     yearMax,
     surfaceMin,
     surfaceMax,
+    surfaceTerrainMin,
+    surfaceTerrainMax,
     pricePerSqmMin,
     pricePerSqmMax,
   ],
@@ -199,6 +237,8 @@ watch(
       yearMax: yearMax.value,
       surfaceMin: normalizeOptionalNumber(surfaceMin.value),
       surfaceMax: normalizeOptionalNumber(surfaceMax.value),
+      surfaceTerrainMin: normalizeOptionalNumber(surfaceTerrainMin.value),
+      surfaceTerrainMax: normalizeOptionalNumber(surfaceTerrainMax.value),
       pricePerSqmMin: normalizeOptionalNumber(pricePerSqmMin.value),
       pricePerSqmMax: normalizeOptionalNumber(pricePerSqmMax.value),
     };

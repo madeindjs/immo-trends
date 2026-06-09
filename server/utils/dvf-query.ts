@@ -17,6 +17,8 @@ export type DvfQueryParams = {
   year_max?: string | string[] | undefined;
   surface_min?: string | string[] | undefined;
   surface_max?: string | string[] | undefined;
+  surface_terrain_min?: string | string[] | undefined;
+  surface_terrain_max?: string | string[] | undefined;
   price_per_sqm_min?: string | string[] | undefined;
   price_per_sqm_max?: string | string[] | undefined;
 };
@@ -162,6 +164,14 @@ export function parseDvfQuery(
     "surface_max",
     query.surface_max,
   );
+  const surfaceTerrainMin = parseOptionalPositiveNumber(
+    "surface_terrain_min",
+    query.surface_terrain_min,
+  );
+  const surfaceTerrainMax = parseOptionalPositiveNumber(
+    "surface_terrain_max",
+    query.surface_terrain_max,
+  );
   const pricePerSqmMin = parseOptionalPositiveNumber(
     "price_per_sqm_min",
     query.price_per_sqm_min,
@@ -172,6 +182,12 @@ export function parseDvfQuery(
   );
 
   assertRangeOrder("surface_min", "surface_max", surfaceMin, surfaceMax);
+  assertRangeOrder(
+    "surface_terrain_min",
+    "surface_terrain_max",
+    surfaceTerrainMin,
+    surfaceTerrainMax,
+  );
   assertRangeOrder(
     "price_per_sqm_min",
     "price_per_sqm_max",
@@ -188,6 +204,8 @@ export function parseDvfQuery(
       yearMax,
       surfaceMin,
       surfaceMax,
+      surfaceTerrainMin,
+      surfaceTerrainMax,
       pricePerSqmMin,
       pricePerSqmMax,
     },

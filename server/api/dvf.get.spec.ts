@@ -163,6 +163,35 @@ describe("parseDvfQuery", () => {
     );
   });
 
+  it("parses surface terrain filters", () => {
+    const result = parseDvfQuery({
+      north: "46.5",
+      south: "46.2",
+      east: "5.5",
+      west: "5.0",
+      surface_terrain_min: "500",
+      surface_terrain_max: "2000",
+    });
+
+    assert.strictEqual(result.filters.surfaceTerrainMin, 500);
+    assert.strictEqual(result.filters.surfaceTerrainMax, 2000);
+  });
+
+  it("rejects inverted surface terrain range", () => {
+    assert.throws(
+      () =>
+        parseDvfQuery({
+          north: "46.5",
+          south: "46.2",
+          east: "5.5",
+          west: "5.0",
+          surface_terrain_min: "2000",
+          surface_terrain_max: "500",
+        }),
+      /surface_terrain_min must be less than or equal to surface_terrain_max/,
+    );
+  });
+
   it("rejects inverted price-per-sqm range", () => {
     assert.throws(
       () =>
@@ -344,6 +373,29 @@ describe("queryDvfInBounds", () => {
           point.surface_reelle_bati != null &&
           point.surface_reelle_bati >= 95 &&
           point.surface_reelle_bati <= 100,
+      ),
+    );
+  });
+
+  it("filters by surface terrain range", () => {
+    const result = queryDvfInBounds(
+      {
+        north: 46.33,
+        south: 46.32,
+        east: 5.39,
+        west: 5.38,
+      },
+      { limit: 2000, surfaceTerrainMin: 2400, surfaceTerrainMax: 2420 },
+      dbPath,
+    );
+
+    assert.ok(result.points.length > 0);
+    assert.ok(
+      result.points.every(
+        (point) =>
+          point.surface_terrain != null &&
+          point.surface_terrain >= 2400 &&
+          point.surface_terrain <= 2420,
       ),
     );
   });

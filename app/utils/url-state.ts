@@ -32,6 +32,8 @@ export function getDefaultFilters(): DvfPointFilters {
     yearMax: getDefaultYearMax(),
     surfaceMin: null,
     surfaceMax: null,
+    surfaceTerrainMin: null,
+    surfaceTerrainMax: null,
     pricePerSqmMin: null,
     pricePerSqmMax: null,
   };
@@ -179,6 +181,8 @@ export function parseUrlState(query: UrlQuery): AppUrlState {
       yearMax,
       surfaceMin: parseOptionalPositiveNumber(query.surface_min),
       surfaceMax: parseOptionalPositiveNumber(query.surface_max),
+      surfaceTerrainMin: parseOptionalPositiveNumber(query.surface_terrain_min),
+      surfaceTerrainMax: parseOptionalPositiveNumber(query.surface_terrain_max),
       pricePerSqmMin: parseOptionalPositiveNumber(query.price_per_sqm_min),
       pricePerSqmMax: parseOptionalPositiveNumber(query.price_per_sqm_max),
     },
@@ -218,6 +222,14 @@ export function buildUrlQuery(state: AppUrlState): UrlQuery {
 
   if (state.filters.surfaceMax != null) {
     query.surface_max = String(state.filters.surfaceMax);
+  }
+
+  if (state.filters.surfaceTerrainMin != null) {
+    query.surface_terrain_min = String(state.filters.surfaceTerrainMin);
+  }
+
+  if (state.filters.surfaceTerrainMax != null) {
+    query.surface_terrain_max = String(state.filters.surfaceTerrainMax);
   }
 
   if (state.filters.pricePerSqmMin != null) {
