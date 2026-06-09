@@ -1,5 +1,6 @@
+import { calculatePricePerSqm } from "../../scripts/draw.utils.ts";
 import { formatMutationDate } from "./format-date.ts";
-import { formatPropertyPrice } from "./format-price.ts";
+import { formatPricePerSqm, formatPropertyPrice } from "./format-price.ts";
 
 export type DvfPopupProperties = {
   date_mutation: string;
@@ -45,8 +46,13 @@ function formatRooms(rooms: number | null): string {
 }
 
 export function buildDvfPopupContent(properties: DvfPopupProperties): string {
+  const pricePerSqm = calculatePricePerSqm(
+    properties.valeur_fonciere,
+    properties.surface_reelle_bati,
+  );
   const lines = [
     `<strong>${formatPropertyPrice(properties.valeur_fonciere)}</strong>`,
+    `${formatPricePerSqm(pricePerSqm)}/m²`,
     formatMutationDate(properties.date_mutation),
     properties.type_local || "—",
     formatAddress(properties),
