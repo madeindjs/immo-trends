@@ -7,6 +7,7 @@ import type {
   DvfMapStats,
   DvfPriceTrendPoint,
   DvfRowDetail,
+  DvfTrendGroupBy,
 } from "../../types.ts";
 
 export type DvfBounds = {
@@ -192,10 +193,22 @@ type DvfTrendPriceRow = {
   price_per_sqm: number;
 };
 
+function trendPeriodSql(groupBy: DvfTrendGroupBy): string {
+  switch (groupBy) {
+    case "quarter":
+      return `strftime('%Y', date_mutation) || '-Q' || CAST((CAST(strftime('%m', date_mutation) AS INTEGER) + 2) / 3 AS TEXT)`;
+    case "year":
+      return `strftime('%Y', date_mutation)`;
+    default:
+      return `strftime('%Y-%m', date_mutation)`;
+  }
+}
+
 export function queryDvfPriceTrends(
   bounds: DvfBounds,
   filters: DvfSpatialFilters,
   dbPath: string = defaultDbPath,
+  groupBy: DvfTrendGroupBy = "month",
 ): DvfPriceTrendPoint[] {
   const db = new DatabaseSync(dbPath);
 
@@ -206,7 +219,7 @@ export function queryDvfPriceTrends(
 
     const pricesSql = `
       SELECT
-        strftime('%Y-%m', date_mutation) AS month,
+        ${trendPeriodSql(groupBy)} AS month,
         CAST(valeur_fonciere AS REAL) / surface_reelle_bati AS price_per_sqm
       FROM dvf
       WHERE ${conditions.join(" AND ")}
@@ -214,20 +227,20 @@ export function queryDvfPriceTrends(
     `;
 
     const priceRows = db.prepare(pricesSql).all(...params) as DvfTrendPriceRow[];
-    const pricesByMonth = new Map<string, number[]>();
+    const pricesByPeriod = new Map<string, number[]>();
 
     for (const row of priceRows) {
       if (row.month == null || row.price_per_sqm == null) {
         continue;
       }
 
-      const prices = pricesByMonth.get(row.month) ?? [];
+      const prices = pricesByPeriod.get(row.month) ?? [];
       prices.push(row.price_per_sqm);
-      pricesByMonth.set(row.month, prices);
+      pricesByPeriod.set(row.month, prices);
     }
 
-    return [...pricesByMonth.entries()]
-      .sort(([monthA], [monthB]) => monthA.localeCompare(monthB))
+    return [...pricesByPeriod.entries()]
+      .sort(([periodA], [periodB]) => periodA.localeCompare(periodB))
       .map(([month, rawPrices]) => {
         const prices = rawPrices.filter(
           (price): price is number => price != null && Number.isFinite(price),

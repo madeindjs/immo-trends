@@ -4,7 +4,7 @@ import {
   isDbAvailable,
   queryDvfPriceTrends,
 } from "../utils/dvf-db.ts";
-import { parseDvfQuery } from "../utils/dvf-query.ts";
+import { parseDvfTrendsQuery } from "../utils/dvf-query.ts";
 
 export default defineEventHandler((event) => {
   if (!isDbAvailable(defaultDbPath)) {
@@ -17,9 +17,10 @@ export default defineEventHandler((event) => {
 
   let bounds;
   let filters;
+  let groupBy;
 
   try {
-    ({ bounds, filters } = parseDvfQuery(getQuery(event)));
+    ({ bounds, filters, groupBy } = parseDvfTrendsQuery(getQuery(event)));
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Invalid query parameters";
@@ -30,6 +31,6 @@ export default defineEventHandler((event) => {
   }
 
   return {
-    trends: queryDvfPriceTrends(bounds, filters),
+    trends: queryDvfPriceTrends(bounds, filters, defaultDbPath, groupBy),
   };
 });

@@ -92,7 +92,11 @@ export type DvfMapStats = {
   maxPricePerSqm: number | null;
 };
 
-/** Monthly price-per-m² trend point for the map trends API (month in YYYY-MM). */
+/** How trend points are grouped in the map trends API. */
+export type DvfTrendGroupBy = "month" | "quarter" | "year";
+
+/** Price-per-m² trend point for the map trends API.
+ *  `month` holds the period key: YYYY-MM, YYYY-Qn, or YYYY. */
 export type DvfPriceTrendPoint = {
   month: string;
   medianPricePerSqm: number | null;

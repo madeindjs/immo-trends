@@ -71,6 +71,26 @@
           </div>
         </div>
 
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <p class="text-sm font-medium">Évolution de la médiane</p>
+          <label class="flex items-center gap-2">
+            <span class="text-xs text-base-content/60">Regrouper par</span>
+            <select
+              v-model="groupBy"
+              class="select select-bordered select-sm"
+              aria-label="Regrouper par"
+            >
+              <option
+                v-for="option in groupByOptions"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </label>
+        </div>
+
         <div
           v-if="loading"
           class="chart-container skeleton w-full rounded-box"
@@ -99,9 +119,14 @@ import {
   Tooltip,
   type ChartConfiguration,
 } from "chart.js";
-import type { DvfMapStats, DvfPriceTrendPoint } from "../../types.ts";
-import { formatTrendMonthLabel } from "../utils/format-date.ts";
+import type {
+  DvfMapStats,
+  DvfPriceTrendPoint,
+  DvfTrendGroupBy,
+} from "../../types.ts";
+import { formatTrendPeriodLabel } from "../utils/format-date.ts";
 import { formatPricePerSqm } from "../utils/format-price.ts";
+import { TREND_GROUP_BY_LABELS } from "../utils/trend-period.ts";
 
 Chart.register(
   CategoryScale,
@@ -115,6 +140,7 @@ Chart.register(
 );
 
 const collapsed = defineModel<boolean>("collapsed", { default: false });
+const groupBy = defineModel<DvfTrendGroupBy>("groupBy", { default: "month" });
 
 const props = defineProps<{
   stats: DvfMapStats;
@@ -131,6 +157,12 @@ const emit = defineEmits<{
 
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
 let chart: Chart<"line"> | null = null;
+
+const groupByOptions = (
+  Object.entries(TREND_GROUP_BY_LABELS) as [DvfTrendGroupBy, string][]
+).map(([value, label]) => ({ value, label }));
+
+const xAxisTitle = computed(() => TREND_GROUP_BY_LABELS[groupBy.value]);
 
 const statusMessage = computed((): string | null => {
   if (props.loading) {
@@ -161,7 +193,9 @@ const statusMessage = computed((): string | null => {
 });
 
 function buildChartConfig(): ChartConfiguration<"line"> {
-  const labels = props.trends.map((point) => formatTrendMonthLabel(point.month));
+  const labels = props.trends.map((point) =>
+    formatTrendPeriodLabel(point.month, groupBy.value),
+  );
 
   return {
     type: "line",
@@ -199,6 +233,7 @@ function buildChartConfig(): ChartConfiguration<"line"> {
       plugins: {
         legend: {
           position: "top",
+          display: false,
         },
         tooltip: {
           callbacks: {
@@ -217,7 +252,7 @@ function buildChartConfig(): ChartConfiguration<"line"> {
         x: {
           title: {
             display: true,
-            text: "Mois",
+            text: xAxisTitle.value,
           },
           ticks: {
             maxRotation: 45,
@@ -270,7 +305,14 @@ function renderChart(): void {
 }
 
 watch(
-  () => [props.trends, props.stats, props.loading, props.error, collapsed.value],
+  () => [
+    props.trends,
+    props.stats,
+    props.loading,
+    props.error,
+    collapsed.value,
+    groupBy.value,
+  ],
   () => {
     nextTick(() => {
       renderChart();

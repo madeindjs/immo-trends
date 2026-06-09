@@ -1,5 +1,9 @@
 import type { LatLngBounds } from "leaflet";
-import type { DvfPriceTrendPoint, DvfTrendsResponse } from "../../types.ts";
+import type {
+  DvfPriceTrendPoint,
+  DvfTrendGroupBy,
+  DvfTrendsResponse,
+} from "../../types.ts";
 import type { DvfPointFilters } from "./useDvfPoints.ts";
 import { MIN_FETCH_ZOOM } from "./useDvfPoints.ts";
 import { buildDvfQueryParams } from "../utils/dvf-query.ts";
@@ -38,6 +42,7 @@ export function useDvfTrends() {
     bounds: LatLngBounds,
     zoom: number,
     filters: DvfPointFilters,
+    groupBy: DvfTrendGroupBy,
   ): Promise<void> {
     cancelPending();
 
@@ -60,7 +65,7 @@ export function useDvfTrends() {
 
     try {
       const response = await $fetch<DvfTrendsResponse>("/api/dvf-trends", {
-        query: buildDvfQueryParams(bounds, filters),
+        query: buildDvfQueryParams(bounds, filters, { groupBy }),
         signal: controller.signal,
       });
 
@@ -91,12 +96,13 @@ export function useDvfTrends() {
     bounds: LatLngBounds,
     zoom: number,
     filters: DvfPointFilters,
+    groupBy: DvfTrendGroupBy,
   ): void {
     cancelPending();
 
     debounceTimer = setTimeout(() => {
       debounceTimer = undefined;
-      void fetchForBounds(bounds, zoom, filters);
+      void fetchForBounds(bounds, zoom, filters, groupBy);
     }, DEBOUNCE_MS);
   }
 

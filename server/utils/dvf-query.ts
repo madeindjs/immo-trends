@@ -1,3 +1,4 @@
+import type { DvfTrendGroupBy } from "../../types.ts";
 import {
   DEFAULT_DVF_LIMIT,
   MAX_DVF_LIMIT,
@@ -21,6 +22,7 @@ export type DvfQueryParams = {
   surface_terrain_max?: string | string[] | undefined;
   price_per_sqm_min?: string | string[] | undefined;
   price_per_sqm_max?: string | string[] | undefined;
+  group_by?: string | string[] | undefined;
 };
 
 function firstValue(value: string | string[] | undefined): string | undefined {
@@ -132,6 +134,29 @@ function assertRangeOrder(
   }
 }
 
+const VALID_TREND_GROUP_BY = new Set<DvfTrendGroupBy>([
+  "month",
+  "quarter",
+  "year",
+]);
+
+function parseOptionalTrendGroupBy(
+  value: string | string[] | undefined,
+): DvfTrendGroupBy {
+  const raw = firstValue(value);
+  if (raw === undefined || raw === "") {
+    return "month";
+  }
+
+  if (!VALID_TREND_GROUP_BY.has(raw as DvfTrendGroupBy)) {
+    throw new Error(
+      "Invalid group_by parameter: expected month, quarter, or year",
+    );
+  }
+
+  return raw as DvfTrendGroupBy;
+}
+
 export function parseDvfQuery(
   query: DvfQueryParams,
 ): { bounds: DvfBounds; filters: DvfQueryFilters } {
@@ -209,5 +234,17 @@ export function parseDvfQuery(
       pricePerSqmMin,
       pricePerSqmMax,
     },
+  };
+}
+
+export function parseDvfTrendsQuery(
+  query: DvfQueryParams,
+): { bounds: DvfBounds; filters: DvfQueryFilters; groupBy: DvfTrendGroupBy } {
+  const { bounds, filters } = parseDvfQuery(query);
+
+  return {
+    bounds,
+    filters,
+    groupBy: parseOptionalTrendGroupBy(query.group_by),
   };
 }

@@ -70,7 +70,7 @@ curl "http://localhost:3000/api/dvf?north=46.5&south=46.2&east=5.5&west=5.0&type
 
 ## `GET /api/dvf-trends`
 
-Returns yearly price-per-m² trends for the current map bounding box.
+Returns price-per-m² trends for the current map bounding box.
 
 ### Query parameters
 
@@ -88,6 +88,7 @@ Returns yearly price-per-m² trends for the current map bounding box.
 | `surface_max` | no | Maximum built surface in m² (`surface_reelle_bati`) |
 | `price_per_sqm_min` | no | Minimum price per m² in € (`valeur_fonciere / surface_reelle_bati`) |
 | `price_per_sqm_max` | no | Maximum price per m² in € (`valeur_fonciere / surface_reelle_bati`) |
+| `group_by` | no | Grouping period: `month` (default), `quarter`, or `year` |
 
 ### Response
 
@@ -95,12 +96,12 @@ Returns yearly price-per-m² trends for the current map bounding box.
 {
   "trends": [
     {
-      "year": 2020,
+      "month": "2020-01",
       "medianPricePerSqm": 3150,
       "count": 128
     },
     {
-      "year": 2021,
+      "month": "2020-02",
       "medianPricePerSqm": 3280,
       "count": 142
     }
@@ -108,7 +109,7 @@ Returns yearly price-per-m² trends for the current map bounding box.
 }
 ```
 
-Each trend point aggregates all qualifying transactions for that year in the bounding box. Rows without a valid built surface or price are excluded. `medianPricePerSqm` is `null` when no qualifying prices exist for that year.
+Each trend point aggregates all qualifying transactions for that period in the bounding box. `month` holds the period key (`YYYY-MM`, `YYYY-Qn`, or `YYYY` depending on `group_by`). Rows without a valid built surface or price are excluded. `medianPricePerSqm` is `null` when no qualifying prices exist for that period.
 
 ### Errors
 

@@ -5,7 +5,7 @@ import {
   removeSampleDb,
 } from "../../test-data/setup-test-db.ts";
 import { queryDvfPriceTrends } from "../utils/dvf-db.ts";
-import { parseDvfQuery } from "../utils/dvf-query.ts";
+import { parseDvfQuery, parseDvfTrendsQuery } from "../utils/dvf-query.ts";
 
 describe("parseDvfQuery for dvf-trends", () => {
   it("parses required bounds", () => {
@@ -49,6 +49,45 @@ describe("parseDvfQuery for dvf-trends", () => {
           east: "5.5",
         }),
       /Missing required parameter: west/,
+    );
+  });
+});
+
+describe("parseDvfTrendsQuery", () => {
+  it("defaults group_by to month", () => {
+    const result = parseDvfTrendsQuery({
+      north: "46.5",
+      south: "46.2",
+      east: "5.5",
+      west: "5.0",
+    });
+
+    assert.strictEqual(result.groupBy, "month");
+  });
+
+  it("parses group_by", () => {
+    const result = parseDvfTrendsQuery({
+      north: "46.5",
+      south: "46.2",
+      east: "5.5",
+      west: "5.0",
+      group_by: "quarter",
+    });
+
+    assert.strictEqual(result.groupBy, "quarter");
+  });
+
+  it("rejects invalid group_by", () => {
+    assert.throws(
+      () =>
+        parseDvfTrendsQuery({
+          north: "46.5",
+          south: "46.2",
+          east: "5.5",
+          west: "5.0",
+          group_by: "week",
+        }),
+      /Invalid group_by parameter/,
     );
   });
 });
@@ -131,6 +170,40 @@ describe("queryDvfPriceTrends", () => {
     );
 
     assert.deepStrictEqual(trends, []);
+  });
+
+  it("returns quarterly median price per sqm", () => {
+    const trends = queryDvfPriceTrends(
+      {
+        north: 47.0,
+        south: 46.0,
+        east: 6.0,
+        west: 4.0,
+      },
+      {},
+      dbPath,
+      "quarter",
+    );
+
+    assert.ok(trends.length > 0);
+    assert.ok(trends.every((point) => /^\d{4}-Q[1-4]$/.test(point.month)));
+  });
+
+  it("returns yearly median price per sqm", () => {
+    const trends = queryDvfPriceTrends(
+      {
+        north: 47.0,
+        south: 46.0,
+        east: 6.0,
+        west: 4.0,
+      },
+      {},
+      dbPath,
+      "year",
+    );
+
+    assert.ok(trends.length > 0);
+    assert.ok(trends.every((point) => /^\d{4}$/.test(point.month)));
   });
 
   it("filters trends by surface and price per sqm", () => {

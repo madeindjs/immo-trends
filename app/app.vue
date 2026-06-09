@@ -58,13 +58,14 @@
 
         <DvfStatsPanel
           v-model:collapsed="statsPanelCollapsed"
+          v-model:group-by="trendGroupBy"
           :stats="stats"
           :trends="trends"
           :loading="loading || trendsLoading"
           :error="trendsError"
           :zoom-too-low="zoomTooLowForData"
           :filters-valid="filtersAreValid()"
-          @hover-month="hoveredTrendMonth = $event"
+          @hover-month="hoveredTrendPeriod = $event"
         />
       </div>
 
@@ -115,7 +116,8 @@ import type {
 import { MIN_FETCH_ZOOM } from "./composables/useDvfPoints.ts";
 import { pricePerSqmToColor } from "./utils/dvf-color.ts";
 import { buildDvfPopupContent } from "./utils/dvf-popup.ts";
-import type { DvfMapPoint } from "../types.ts";
+import type { DvfMapPoint, DvfTrendGroupBy } from "../types.ts";
+import { matchesTrendPeriod } from "./utils/trend-period.ts";
 import { calculatePricePerSqm } from "../scripts/draw.utils.ts";
 import type { DvfPointFilters } from "./composables/useDvfPoints.ts";
 import {
@@ -204,7 +206,8 @@ const {
 const filters = ref<DvfPointFilters>(getDefaultFilters());
 const detailOpen = ref(false);
 const statsPanelCollapsed = ref(loadStatsPanelCollapsed());
-const hoveredTrendMonth = ref<string | null>(null);
+const trendGroupBy = ref<DvfTrendGroupBy>("month");
+const hoveredTrendPeriod = ref<string | null>(null);
 const { initializeFromUrl, pushMapState } = useAppUrlState(
   {
     zoom,
@@ -291,18 +294,17 @@ function filtersAreValid(): boolean {
   return true;
 }
 
-function getMutationMonth(dateMutation: string): string {
-  return dateMutation.slice(0, 7);
-}
-
 function getVisiblePoints(): DvfMapPoint[] {
-  if (hoveredTrendMonth.value === null) {
+  if (hoveredTrendPeriod.value === null) {
     return points.value;
   }
 
-  return points.value.filter(
-    (point) =>
-      getMutationMonth(point.date_mutation) === hoveredTrendMonth.value,
+  return points.value.filter((point) =>
+    matchesTrendPeriod(
+      point.date_mutation,
+      hoveredTrendPeriod.value!,
+      trendGroupBy.value,
+    ),
   );
 }
 
@@ -479,20 +481,25 @@ function refreshData(): void {
   const bounds = map.getBounds();
   const currentZoom = map.getZoom();
   scheduleFetch(bounds, currentZoom, filters.value);
-  scheduleTrendsFetch(bounds, currentZoom, filters.value);
+  scheduleTrendsFetch(bounds, currentZoom, filters.value, trendGroupBy.value);
 }
 
 function invalidateMapSize(): void {
   mapInstance.value?.invalidateSize();
 }
 
-watch([points, stats, hoveredTrendMonth], () => {
+watch([points, stats, hoveredTrendPeriod, trendGroupBy], () => {
   void renderPoints();
 });
 
 watch(filters, () => {
   refreshData();
 }, { deep: true });
+
+watch(trendGroupBy, () => {
+  hoveredTrendPeriod.value = null;
+  refreshData();
+});
 
 watch(statsPanelCollapsed, (collapsed) => {
   saveStatsPanelCollapsed(collapsed);

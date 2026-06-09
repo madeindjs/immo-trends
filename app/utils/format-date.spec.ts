@@ -1,6 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { formatMutationDate, formatTrendMonthLabel } from "./format-date.ts";
+import {
+  formatMutationDate,
+  formatTrendMonthLabel,
+  formatTrendPeriodLabel,
+} from "./format-date.ts";
 
 describe("formatTrendMonthLabel", () => {
   it("formats YYYY-MM months with Intl in French", () => {
@@ -10,6 +14,16 @@ describe("formatTrendMonthLabel", () => {
   it("returns a fallback for invalid months", () => {
     assert.strictEqual(formatTrendMonthLabel("invalid"), "invalid");
     assert.strictEqual(formatTrendMonthLabel(null), "—");
+  });
+});
+
+describe("formatTrendPeriodLabel", () => {
+  it("formats quarterly periods", () => {
+    assert.strictEqual(formatTrendPeriodLabel("2021-Q1", "quarter"), "T1 2021");
+  });
+
+  it("formats yearly periods", () => {
+    assert.strictEqual(formatTrendPeriodLabel("2021", "year"), "2021");
   });
 });
 

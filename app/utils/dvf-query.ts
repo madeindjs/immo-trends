@@ -1,9 +1,11 @@
 import type { LatLngBounds } from "leaflet";
+import type { DvfTrendGroupBy } from "../../types.ts";
 import type { DvfPointFilters } from "../composables/useDvfPoints.ts";
 
 export function buildDvfQueryParams(
   bounds: LatLngBounds,
   filters: DvfPointFilters,
+  options?: { groupBy?: DvfTrendGroupBy },
 ): Record<string, string | number | string[]> {
   const query: Record<string, string | number | string[]> = {
     north: bounds.getNorth(),
@@ -40,6 +42,10 @@ export function buildDvfQueryParams(
 
   if (filters.pricePerSqmMax != null) {
     query.price_per_sqm_max = filters.pricePerSqmMax;
+  }
+
+  if (options?.groupBy != null && options.groupBy !== "month") {
+    query.group_by = options.groupBy;
   }
 
   return query;
