@@ -6,10 +6,10 @@ import {
 } from "./dvf-db.ts";
 
 export type DvfQueryParams = {
-  north: string | string[] | undefined;
-  south: string | string[] | undefined;
-  east: string | string[] | undefined;
-  west: string | string[] | undefined;
+  north?: string | string[] | undefined;
+  south?: string | string[] | undefined;
+  east?: string | string[] | undefined;
+  west?: string | string[] | undefined;
   limit?: string | string[] | undefined;
   type_local?: string | string[] | undefined;
   year?: string | string[] | undefined;

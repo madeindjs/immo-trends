@@ -9,6 +9,7 @@
     "dev": "TMPDIR=/tmp nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
+    "typecheck": "nuxt typecheck",
     "postinstall": "nuxt prepare",
     "clean": "rm -f data/ && rm -f dvf.sqlite3",
     "draw": "node scripts/draw.ts",
@@ -31,5 +32,8 @@
     "tailwindcss": "^4.3.0",
     "vue": "^3.5.35",
     "vue-router": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2"
   }
 }

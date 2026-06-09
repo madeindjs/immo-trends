@@ -11,10 +11,9 @@ export function createSampleDb(): string {
     os.tmpdir(),
     `dvf-test-${process.pid}-${Date.now()}.sqlite3`,
   );
-  const schema = fs
-    .readFileSync(path.join(rootDir, "init.sql"), "utf8")
-    .split(".import")[0]
-    .trim();
+  const schema = (fs.readFileSync(path.join(rootDir, "init.sql"), "utf8").split(
+    ".import",
+  )[0] ?? "").trim();
   const csvPath = path.join(rootDir, "test-data", "dvf.sample.csv");
 
   const db = new DatabaseSync(dbPath);

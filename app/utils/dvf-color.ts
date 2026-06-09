@@ -23,11 +23,13 @@ export type DvfMarkerColors = {
   color: string;
 };
 
-function hasValidStats(stats: DvfMapStats): stats is {
+type ValidDvfStats = {
   medianPricePerSqm: number;
   minPricePerSqm: number;
   maxPricePerSqm: number;
-} {
+};
+
+function hasValidStats(stats: DvfMapStats): stats is ValidDvfStats {
   return (
     stats.medianPricePerSqm !== null &&
     stats.minPricePerSqm !== null &&
@@ -35,7 +37,7 @@ function hasValidStats(stats: DvfMapStats): stats is {
   );
 }
 
-function scaleIndex(pricePerSqm: number, stats: DvfMapStats): number {
+function scaleIndex(pricePerSqm: number, stats: ValidDvfStats): number {
   const { medianPricePerSqm, minPricePerSqm, maxPricePerSqm } = stats;
 
   if (pricePerSqm <= medianPricePerSqm) {
@@ -59,6 +61,6 @@ export function pricePerSqmToColor(
     return { fillColor: GRAY, color: GRAY };
   }
 
-  const fillColor = PRICE_SCALE_700[scaleIndex(pricePerSqm, stats)];
+  const fillColor = PRICE_SCALE_700[scaleIndex(pricePerSqm, stats)] ?? GRAY;
   return { fillColor, color: fillColor };
 }

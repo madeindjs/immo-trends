@@ -8,9 +8,14 @@ export function getMedian(array: number[]): number {
   const sorted = array.slice().sort((a, b) => a - b);
   const middle = Math.floor(sorted.length / 2);
   if (sorted.length % 2 === 0) {
-    return (sorted[middle - 1] + sorted[middle]) / 2;
+    const lower = sorted[middle - 1];
+    const upper = sorted[middle];
+    if (lower === undefined || upper === undefined) {
+      return 0;
+    }
+    return (lower + upper) / 2;
   }
-  return sorted[middle];
+  return sorted[middle] ?? 0;
 }
 
 /**

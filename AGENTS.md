@@ -5,6 +5,7 @@ Typescript guideline
 - use only `erasableSyntaxOnly` to keep compatibility with node
 - use the node version from `.nvmrc`
 - use `node:test` for testing
+- at the end of any implementation, run `npm run typecheck` and fix any reported errors before finishing
 
 Nuxt (frontend)
 

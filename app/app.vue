@@ -104,7 +104,14 @@
 
 <script setup lang="ts">
 import type { Feature, FeatureCollection, Point } from "geojson";
-import type { GeoJSON, Map } from "leaflet";
+import type {
+  GeoJSON,
+  LatLng,
+  Layer,
+  LeafletEvent,
+  LeafletMouseEvent,
+  Map,
+} from "leaflet";
 import { MIN_FETCH_ZOOM } from "./composables/useDvfPoints.ts";
 import { pricePerSqmToColor } from "./utils/dvf-color.ts";
 import { buildDvfPopupContent } from "./utils/dvf-popup.ts";
@@ -344,9 +351,12 @@ async function renderPoints(): Promise<void> {
     return;
   }
 
-  dvfLayer.value = L.geoJSON(buildFeatureCollection(), {
-    pointToLayer(feature, latlng) {
-      const properties = feature.properties as DvfFeatureProperties;
+  const layer = L.geoJSON(buildFeatureCollection(), {
+    pointToLayer(
+      feature: Feature<Point, DvfFeatureProperties>,
+      latlng: LatLng,
+    ) {
+      const properties = feature.properties;
       const pricePerSqm = calculatePricePerSqm(
         properties.valeur_fonciere,
         properties.surface_reelle_bati,
@@ -361,27 +371,30 @@ async function renderPoints(): Promise<void> {
         fillOpacity: 0.8,
       });
     },
-    onEachFeature(feature, layer) {
-      const properties = feature.properties as DvfFeatureProperties;
+    onEachFeature(
+      feature: Feature<Point, DvfFeatureProperties>,
+      featureLayer: Layer,
+    ) {
+      const properties = feature.properties;
 
-      layer.bindPopup(buildDvfPopupContent(properties), {
+      featureLayer.bindPopup(buildDvfPopupContent(properties), {
         closeButton: false,
         autoPan: false,
       });
-      const handleOpenDetail = (event: { originalEvent: Event }): void => {
+      const handleOpenDetail = (event: LeafletMouseEvent): void => {
         event.originalEvent.stopPropagation();
         openDetail(properties.rowid);
       };
 
-      layer.on("mouseover", (event) => {
+      featureLayer.on("mouseover", (event: LeafletEvent) => {
         event.target.openPopup();
       });
-      layer.on("mouseout", (event) => {
+      featureLayer.on("mouseout", (event: LeafletEvent) => {
         event.target.closePopup();
       });
-      layer.on("click", handleOpenDetail);
-      layer.on("popupopen", () => {
-        const popupContent = layer
+      featureLayer.on("click", handleOpenDetail);
+      featureLayer.on("popupopen", () => {
+        const popupContent = featureLayer
           .getPopup()
           ?.getElement()
           ?.querySelector(".dvf-popup");
@@ -397,7 +410,8 @@ async function renderPoints(): Promise<void> {
     },
   });
 
-  dvfLayer.value.addTo(map);
+  dvfLayer.value = layer;
+  layer.addTo(map);
 }
 
 type StatusToast = {
