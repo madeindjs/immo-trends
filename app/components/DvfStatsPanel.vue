@@ -6,7 +6,7 @@
       :aria-expanded="!collapsed"
       @click="collapsed = !collapsed"
     >
-      <span class="text-sm font-semibold">Statistiques zone visible</span>
+      <span class="text-sm font-semibold">{{ panelTitle }}</span>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -149,6 +149,8 @@ const props = defineProps<{
   error: string | null;
   zoomTooLow: boolean;
   filtersValid: boolean;
+  transactionCount: number;
+  truncated: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -163,6 +165,29 @@ const groupByOptions = (
 ).map(([value, label]) => ({ value, label }));
 
 const xAxisTitle = computed(() => TREND_GROUP_BY_LABELS[groupBy.value]);
+
+const panelTitle = computed((): string => {
+  if (
+    props.loading ||
+    props.error ||
+    !props.filtersValid ||
+    props.zoomTooLow ||
+    props.transactionCount === 0
+  ) {
+    return "Statistiques zone visible";
+  }
+
+  const base =
+    props.transactionCount === 1
+      ? "Statistiques de 1 transaction visible"
+      : `Statistiques des ${props.transactionCount} transactions visibles`;
+
+  if (props.truncated) {
+    return `${base} (résultats tronqués)`;
+  }
+
+  return base;
+});
 
 const statusMessage = computed((): string | null => {
   if (props.loading) {

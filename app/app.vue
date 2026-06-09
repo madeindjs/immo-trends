@@ -65,6 +65,8 @@
           :error="trendsError"
           :zoom-too-low="zoomTooLowForData"
           :filters-valid="filtersAreValid()"
+          :transaction-count="points.length"
+          :truncated="truncated"
           @hover-month="hoveredTrendPeriod = $event"
         />
       </div>
@@ -452,24 +454,7 @@ const statusToast = computed((): StatusToast | null => {
     };
   }
 
-  if (truncated.value) {
-    return {
-      message: `${points.value.length} transactions affichées (résultats tronqués).`,
-      alertClass: "alert-success",
-    };
-  }
-
-  if (points.value.length > 0) {
-    return {
-      message: `${points.value.length} transactions affichées.`,
-      alertClass: "alert-success",
-    };
-  }
-
-  return {
-    message: "Aucune transaction DVF dans cette zone.",
-    alertClass: "alert-info",
-  };
+  return null;
 });
 
 function refreshData(): void {
