@@ -24,34 +24,29 @@ describe("pricePerSqmToColor", () => {
     assert.strictEqual(colors.fillColor, "#9ca3af");
   });
 
-  it("returns green-700 at median", () => {
+  it("returns the median scale color at median", () => {
     const colors = pricePerSqmToColor(2000, sampleStats);
-    assert.strictEqual(colors.fillColor, "#15803d");
+    assert.strictEqual(colors.fillColor, "#26838f");
+    assert.strictEqual(colors.color, "black");
   });
 
-  it("returns sky-700 at minimum", () => {
+  it("returns the minimum scale color at minimum", () => {
     const colors = pricePerSqmToColor(1000, sampleStats);
-    assert.strictEqual(colors.fillColor, "#0369a1");
+    assert.strictEqual(colors.fillColor, "#fee825");
   });
 
-  it("returns red-700 at maximum", () => {
+  it("returns the maximum scale color at maximum", () => {
     const colors = pricePerSqmToColor(3000, sampleStats);
-    assert.strictEqual(colors.fillColor, "#b91c1c");
+    assert.strictEqual(colors.fillColor, "#440154");
   });
 
-  it("returns a cool color below median", () => {
+  it("returns a lighter color below median", () => {
     const colors = pricePerSqmToColor(1500, sampleStats);
-    assert.ok(
-      ["#047857", "#0f766e", "#0e7490", "#0369a1"].includes(colors.fillColor),
-    );
+    assert.strictEqual(colors.fillColor, "#6cce5a");
   });
 
-  it("returns a warm color above median", () => {
+  it("returns a darker color above median", () => {
     const colors = pricePerSqmToColor(2500, sampleStats);
-    assert.ok(
-      ["#b91c1c", "#c2410c", "#b45309", "#a16207", "#4d7c0f"].includes(
-        colors.fillColor,
-      ),
-    );
+    assert.strictEqual(colors.fillColor, "#3f4a8a");
   });
 });

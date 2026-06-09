@@ -2,21 +2,22 @@ import type { DvfMapStats } from "../../types.ts";
 
 const GRAY = "#9ca3af";
 
-/** Tailwind 700 palette: red (expensive) → sky (cheap). */
 const PRICE_SCALE_700 = [
-  "#b91c1c", // red-700
-  "#c2410c", // orange-700
-  "#b45309", // amber-700
-  "#a16207", // yellow-700
-  "#4d7c0f", // lime-700
-  "#15803d", // green-700
-  "#047857", // emerald-700
-  "#0f766e", // teal-700
-  "#0e7490", // cyan-700
-  "#0369a1", // sky-700
-] as const;
+  "#440154",
+  "#482777",
+  "#3f4a8a",
+  "#31678e",
+  "#26838f",
+  "#1f9d8a",
+  "#6cce5a",
+  "#b6de2b",
+  "#fee825",
+];
 
-const MEDIAN_INDEX = 5;
+// .scale(["#fff33b", "#fdc70c", "#f3903f", "#ed683c", "#e93e3a"])
+// .scale(["#93c47d", "#b1cf85", "#fbb021", "#f68838", "#ee3e32"])
+
+const MEDIAN_INDEX = Math.floor(PRICE_SCALE_700.length / 2);
 
 export type DvfMarkerColors = {
   fillColor: string;
@@ -62,5 +63,5 @@ export function pricePerSqmToColor(
   }
 
   const fillColor = PRICE_SCALE_700[scaleIndex(pricePerSqm, stats)] ?? GRAY;
-  return { fillColor, color: fillColor };
+  return { fillColor, color: "black" };
 }
