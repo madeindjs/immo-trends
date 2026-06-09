@@ -51,13 +51,17 @@ export function buildDvfPopupContent(properties: DvfPopupProperties): string {
     properties.type_local || "—",
     formatAddress(properties),
     `${properties.code_postal} ${properties.nom_commune}`,
-    `Surface: ${formatSurface(properties.surface_reelle_bati)}`,
-    `Pièces: ${formatRooms(properties.nombre_pieces_principales)}`,
   ];
+  let surface = `Surface: ${formatSurface(properties.surface_reelle_bati)}`;
 
   if (properties.surface_terrain != null && properties.surface_terrain > 0) {
-    lines.push(`Terrain: ${formatSurface(properties.surface_terrain)}`);
+    surface += ` / Terrain: ${formatSurface(properties.surface_terrain)}`;
   }
+
+  lines.push(
+    surface,
+    `Pièces: ${formatRooms(properties.nombre_pieces_principales)}`,
+  );
 
   return `<div class="dvf-popup">${lines.join("<br>")}</div>`;
 }
