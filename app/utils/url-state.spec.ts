@@ -95,6 +95,8 @@ describe("buildUrlQuery", () => {
         surfaceTerrainMax: null,
         pricePerSqmMin: null,
         pricePerSqmMax: null,
+        roomsMin: null,
+        roomsMax: null,
       },
     });
 
@@ -127,6 +129,8 @@ describe("buildUrlQuery", () => {
         surfaceTerrainMax: null,
         pricePerSqmMin: null,
         pricePerSqmMax: 5000,
+        roomsMin: null,
+        roomsMax: null,
       },
     });
 
@@ -158,6 +162,8 @@ describe("url state round-trip", () => {
         surfaceTerrainMax: 2000,
         pricePerSqmMin: 1500,
         pricePerSqmMax: 4000,
+        roomsMin: 2,
+        roomsMax: 4,
       },
     };
 

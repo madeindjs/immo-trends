@@ -267,6 +267,8 @@ function filtersAreValid(): boolean {
     surfaceTerrainMax,
     pricePerSqmMin,
     pricePerSqmMax,
+    roomsMin,
+    roomsMax,
   } = filters.value;
 
   if (typeLocals.length === 0 || yearMin > yearMax) {
@@ -290,6 +292,10 @@ function filtersAreValid(): boolean {
     pricePerSqmMax != null &&
     pricePerSqmMin > pricePerSqmMax
   ) {
+    return false;
+  }
+
+  if (roomsMin != null && roomsMax != null && roomsMin > roomsMax) {
     return false;
   }
 

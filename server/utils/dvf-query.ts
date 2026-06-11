@@ -22,6 +22,8 @@ export type DvfQueryParams = {
   surface_terrain_max?: string | string[] | undefined;
   price_per_sqm_min?: string | string[] | undefined;
   price_per_sqm_max?: string | string[] | undefined;
+  rooms_min?: string | string[] | undefined;
+  rooms_max?: string | string[] | undefined;
   group_by?: string | string[] | undefined;
 };
 
@@ -205,6 +207,8 @@ export function parseDvfQuery(
     "price_per_sqm_max",
     query.price_per_sqm_max,
   );
+  const roomsMin = parseOptionalPositiveNumber("rooms_min", query.rooms_min);
+  const roomsMax = parseOptionalPositiveNumber("rooms_max", query.rooms_max);
 
   assertRangeOrder("surface_min", "surface_max", surfaceMin, surfaceMax);
   assertRangeOrder(
@@ -219,6 +223,7 @@ export function parseDvfQuery(
     pricePerSqmMin,
     pricePerSqmMax,
   );
+  assertRangeOrder("rooms_min", "rooms_max", roomsMin, roomsMax);
 
   return {
     bounds: { north, south, east, west },
@@ -233,6 +238,8 @@ export function parseDvfQuery(
       surfaceTerrainMax,
       pricePerSqmMin,
       pricePerSqmMax,
+      roomsMin,
+      roomsMax,
     },
   };
 }

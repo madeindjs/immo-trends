@@ -27,6 +27,8 @@ export type DvfPointFilters = {
   surfaceTerrainMax: number | null;
   pricePerSqmMin: number | null;
   pricePerSqmMax: number | null;
+  roomsMin: number | null;
+  roomsMax: number | null;
 };
 
 function isAbortError(error: unknown): boolean {

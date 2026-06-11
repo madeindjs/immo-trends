@@ -44,6 +44,14 @@ export function buildDvfQueryParams(
     query.price_per_sqm_max = filters.pricePerSqmMax;
   }
 
+  if (filters.roomsMin != null) {
+    query.rooms_min = filters.roomsMin;
+  }
+
+  if (filters.roomsMax != null) {
+    query.rooms_max = filters.roomsMax;
+  }
+
   if (options?.groupBy != null && options.groupBy !== "month") {
     query.group_by = options.groupBy;
   }

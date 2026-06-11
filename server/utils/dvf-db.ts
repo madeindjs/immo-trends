@@ -27,6 +27,8 @@ export type DvfQueryFilters = {
   surfaceTerrainMax?: number;
   pricePerSqmMin?: number;
   pricePerSqmMax?: number;
+  roomsMin?: number;
+  roomsMax?: number;
   limit: number;
 };
 
@@ -74,6 +76,8 @@ type DvfSpatialFilters = Pick<
   | "surfaceTerrainMax"
   | "pricePerSqmMin"
   | "pricePerSqmMax"
+  | "roomsMin"
+  | "roomsMax"
 >;
 
 function buildWhereClause(
@@ -146,6 +150,16 @@ function buildWhereClause(
       );
       params.push(filters.pricePerSqmMax);
     }
+  }
+
+  if (filters.roomsMin != null) {
+    conditions.push("nombre_pieces_principales >= ?");
+    params.push(filters.roomsMin);
+  }
+
+  if (filters.roomsMax != null) {
+    conditions.push("nombre_pieces_principales <= ?");
+    params.push(filters.roomsMax);
   }
 
   return { conditions, params };

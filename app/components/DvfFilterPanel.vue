@@ -102,6 +102,34 @@
       </fieldset>
 
       <fieldset class="fieldset">
+        <legend class="fieldset-legend">Nombre de pièces</legend>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="form-control">
+            <span class="label-text mb-1">De</span>
+            <input
+              v-model.number="roomsMin"
+              type="number"
+              class="input input-bordered input-sm w-full"
+              min="0"
+              step="1"
+              placeholder="Min"
+            />
+          </label>
+          <label class="form-control">
+            <span class="label-text mb-1">À</span>
+            <input
+              v-model.number="roomsMax"
+              type="number"
+              class="input input-bordered input-sm w-full"
+              min="0"
+              step="1"
+              placeholder="Max"
+            />
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset class="fieldset">
         <legend class="fieldset-legend">Prix au m² (€)</legend>
         <div class="grid grid-cols-2 gap-3">
           <label class="form-control">
@@ -146,6 +174,12 @@
         La surface de terrain minimale doit être inférieure ou égale à la surface de terrain maximale.
       </p>
       <p
+        v-else-if="roomsMin != null && roomsMax != null && roomsMin > roomsMax"
+        class="text-sm text-warning"
+      >
+        Le nombre de pièces minimal doit être inférieur ou égal au nombre de pièces maximal.
+      </p>
+      <p
         v-else-if="pricePerSqmMin != null && pricePerSqmMax != null && pricePerSqmMin > pricePerSqmMax"
         class="text-sm text-warning"
       >
@@ -173,6 +207,8 @@ const surfaceTerrainMin = ref(filters.value.surfaceTerrainMin);
 const surfaceTerrainMax = ref(filters.value.surfaceTerrainMax);
 const pricePerSqmMin = ref(filters.value.pricePerSqmMin);
 const pricePerSqmMax = ref(filters.value.pricePerSqmMax);
+const roomsMin = ref(filters.value.roomsMin);
+const roomsMax = ref(filters.value.roomsMax);
 
 let isSyncingFromModel = false;
 
@@ -192,6 +228,8 @@ function syncPanelFromModel(nextFilters: DvfPointFilters): void {
   surfaceTerrainMax.value = nextFilters.surfaceTerrainMax;
   pricePerSqmMin.value = nextFilters.pricePerSqmMin;
   pricePerSqmMax.value = nextFilters.pricePerSqmMax;
+  roomsMin.value = nextFilters.roomsMin;
+  roomsMax.value = nextFilters.roomsMax;
   nextTick(() => {
     isSyncingFromModel = false;
   });
@@ -217,6 +255,8 @@ watch(
     surfaceTerrainMax,
     pricePerSqmMin,
     pricePerSqmMax,
+    roomsMin,
+    roomsMax,
   ],
   () => {
     if (isSyncingFromModel) {
@@ -241,6 +281,8 @@ watch(
       surfaceTerrainMax: normalizeOptionalNumber(surfaceTerrainMax.value),
       pricePerSqmMin: normalizeOptionalNumber(pricePerSqmMin.value),
       pricePerSqmMax: normalizeOptionalNumber(pricePerSqmMax.value),
+      roomsMin: normalizeOptionalNumber(roomsMin.value),
+      roomsMax: normalizeOptionalNumber(roomsMax.value),
     };
   },
 );

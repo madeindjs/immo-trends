@@ -163,6 +163,35 @@ describe("parseDvfQuery", () => {
     );
   });
 
+  it("parses rooms filters", () => {
+    const result = parseDvfQuery({
+      north: "46.5",
+      south: "46.2",
+      east: "5.5",
+      west: "5.0",
+      rooms_min: "2",
+      rooms_max: "4",
+    });
+
+    assert.strictEqual(result.filters.roomsMin, 2);
+    assert.strictEqual(result.filters.roomsMax, 4);
+  });
+
+  it("rejects inverted rooms range", () => {
+    assert.throws(
+      () =>
+        parseDvfQuery({
+          north: "46.5",
+          south: "46.2",
+          east: "5.5",
+          west: "5.0",
+          rooms_min: "4",
+          rooms_max: "2",
+        }),
+      /rooms_min must be less than or equal to rooms_max/,
+    );
+  });
+
   it("parses surface terrain filters", () => {
     const result = parseDvfQuery({
       north: "46.5",
@@ -396,6 +425,29 @@ describe("queryDvfInBounds", () => {
           point.surface_terrain != null &&
           point.surface_terrain >= 2400 &&
           point.surface_terrain <= 2420,
+      ),
+    );
+  });
+
+  it("filters by rooms range", () => {
+    const result = queryDvfInBounds(
+      {
+        north: 46.33,
+        south: 46.32,
+        east: 5.39,
+        west: 5.38,
+      },
+      { limit: 2000, roomsMin: 4, roomsMax: 5 },
+      dbPath,
+    );
+
+    assert.ok(result.points.length > 0);
+    assert.ok(
+      result.points.every(
+        (point) =>
+          point.nombre_pieces_principales != null &&
+          point.nombre_pieces_principales >= 4 &&
+          point.nombre_pieces_principales <= 5,
       ),
     );
   });

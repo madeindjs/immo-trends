@@ -21,6 +21,8 @@ Returns DVF transaction points for the current map bounding box.
 | `surface_max` | no | Maximum built surface in m² (`surface_reelle_bati`) |
 | `price_per_sqm_min` | no | Minimum price per m² in € (`valeur_fonciere / surface_reelle_bati`) |
 | `price_per_sqm_max` | no | Maximum price per m² in € (`valeur_fonciere / surface_reelle_bati`) |
+| `rooms_min` | no | Minimum number of main rooms (`nombre_pieces_principales`) |
+| `rooms_max` | no | Maximum number of main rooms (`nombre_pieces_principales`) |
 
 ### Response
 
@@ -88,6 +90,8 @@ Returns price-per-m² trends for the current map bounding box.
 | `surface_max` | no | Maximum built surface in m² (`surface_reelle_bati`) |
 | `price_per_sqm_min` | no | Minimum price per m² in € (`valeur_fonciere / surface_reelle_bati`) |
 | `price_per_sqm_max` | no | Maximum price per m² in € (`valeur_fonciere / surface_reelle_bati`) |
+| `rooms_min` | no | Minimum number of main rooms (`nombre_pieces_principales`) |
+| `rooms_max` | no | Maximum number of main rooms (`nombre_pieces_principales`) |
 | `group_by` | no | Grouping period: `month` (default), `quarter`, or `year` |
 
 ### Response

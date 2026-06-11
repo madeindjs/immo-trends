@@ -36,6 +36,8 @@ export function getDefaultFilters(): DvfPointFilters {
     surfaceTerrainMax: null,
     pricePerSqmMin: null,
     pricePerSqmMax: null,
+    roomsMin: null,
+    roomsMax: null,
   };
 }
 
@@ -185,6 +187,8 @@ export function parseUrlState(query: UrlQuery): AppUrlState {
       surfaceTerrainMax: parseOptionalPositiveNumber(query.surface_terrain_max),
       pricePerSqmMin: parseOptionalPositiveNumber(query.price_per_sqm_min),
       pricePerSqmMax: parseOptionalPositiveNumber(query.price_per_sqm_max),
+      roomsMin: parseOptionalPositiveNumber(query.rooms_min),
+      roomsMax: parseOptionalPositiveNumber(query.rooms_max),
     },
   };
 }
@@ -238,6 +242,14 @@ export function buildUrlQuery(state: AppUrlState): UrlQuery {
 
   if (state.filters.pricePerSqmMax != null) {
     query.price_per_sqm_max = String(state.filters.pricePerSqmMax);
+  }
+
+  if (state.filters.roomsMin != null) {
+    query.rooms_min = String(state.filters.roomsMin);
+  }
+
+  if (state.filters.roomsMax != null) {
+    query.rooms_max = String(state.filters.roomsMax);
   }
 
   return query;
