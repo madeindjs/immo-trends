@@ -10,6 +10,7 @@ node_modules
 graphs
 dvf.sqlite3
 dvf.sqlite3*
+dvf_test.sqlite3
 data/
 
 # Logs
