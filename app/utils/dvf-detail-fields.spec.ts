@@ -12,6 +12,7 @@ const sampleRow: DvfRowDetail = {
   rowid: 2,
   id_mutation: "2021-1",
   date_mutation: "2021-01-05",
+  year: 2021,
   numero_disposition: "000001",
   nature_mutation: "Vente",
   valeur_fonciere: "185000",
