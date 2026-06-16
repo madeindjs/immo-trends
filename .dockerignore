@@ -9,5 +9,7 @@ dvf.sqlite3-journal
 .git
 .github
 *.md
-scripts
+scripts/*
+!scripts/draw.utils.ts
+!scripts/draw.utils.spec.ts
 test-data
