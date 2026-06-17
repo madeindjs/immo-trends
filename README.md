@@ -42,6 +42,8 @@ Ouvrir [http://localhost:3000](http://localhost:3000) dans le navigateur.
 
 La carte charge les transactions DVF visibles dans la fenêtre courante via l'API `GET /api/dvf`. Un panneau statistiques en bas de la carte affiche le min/médiane/max au m² et l'évolution annuelle via `GET /api/dvf-trends`. Zoomez au niveau 10 ou plus pour afficher les points. Voir la [documentation de l'API](docs/api.md).
 
+La barre de navigation propose un lien vers la page [`/about`](http://localhost:3000/about) qui décrit la source des données (DVF, data.gouv.fr) et la licence. Voir [docs/pages.md](docs/pages.md) pour le détail des pages.
+
 > **macOS** : Nuxt 4.4.7 place le socket vite-node dans un chemin temporaire qui peut dépasser la limite de 104 caractères du système. Le script `dev` utilise `TMPDIR=/tmp` pour contourner ce problème ([nuxt/nuxt#35264](https://github.com/nuxt/nuxt/issues/35264)).
 
 Autres commandes utiles :
