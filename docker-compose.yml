@@ -13,10 +13,8 @@ services:
       restart_policy:
         condition: on-failure
     ports:
-      - "5001:3000"
+      - "5001:3001"
     environment:
       - NODE_ENV=production
       - HOST=0.0.0.0
-      - PORT=3000
-    volumes:
-      - "$PWD/dvf.sqlite3:/app/dvf.sqlite3:ro"
+      - PORT=3001
