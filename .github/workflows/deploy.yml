@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - deploy
 
 env:
   REGISTRY: ghcr.io
@@ -63,7 +62,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=sha,prefix=
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/deploy' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
