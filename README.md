@@ -62,6 +62,17 @@ Le schéma de la base de données SQLite (`dvf.sqlite3`) est défini dans le fic
 sqlite3 dvf.sqlite3 < indexes.sql
 ```
 
+## Déploiement
+
+Un `Dockerfile` et un `docker-compose.yml` sont fournis pour déployer l'application (typiquement sur un VPS avec Docker Swarm) :
+
+```sh
+export IMAGE=ghcr.io/madeindjs/immo-trends:latest
+docker stack deploy -c docker-compose.yml immo-trends
+```
+
+La base SQLite est stockée dans un volume Docker nommé (`dvf-data`) afin d'éviter de retélécharger et réimporter le jeu de données (~6 Go) à chaque mise à jour de l'image. Voir [docs/deploy.md](docs/deploy.md) pour le détail.
+
 ## Nettoyage
 
 Pour supprimer les données calculées et la base de données :

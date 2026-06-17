@@ -35,7 +35,8 @@ export type DvfQueryFilters = {
 export const DEFAULT_DVF_LIMIT = 2000;
 export const MAX_DVF_LIMIT = 5000;
 
-export const defaultDbPath = path.join(process.cwd(), "dvf.sqlite3");
+export const defaultDbPath =
+  process.env.DVF_DB_PATH ?? path.join(process.cwd(), "dvf.sqlite3");
 
 const EMPTY_STATS: DvfMapStats = {
   medianPricePerSqm: null,
