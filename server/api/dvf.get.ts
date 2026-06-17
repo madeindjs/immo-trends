@@ -1,4 +1,5 @@
-import { createError, defineEventHandler, getQuery } from "h3";
+import { createError, defineEventHandler, getQuery, getRequestIP, setResponseHeader } from "h3";
+import { checkRateLimit } from "../utils/rate-limit.ts";
 import {
   defaultDbPath,
   isDbAvailable,
@@ -7,6 +8,20 @@ import {
 import { parseDvfQuery } from "../utils/dvf-query.ts";
 
 export default defineEventHandler((event) => {
+  const decision = checkRateLimit(getRequestIP(event) ?? undefined);
+  if (!decision.allowed) {
+    setResponseHeader(event, "Retry-After", Math.ceil(decision.retryAfterMs / 1000));
+    throw createError({
+      statusCode: 429,
+      statusMessage: "Too Many Requests",
+      data: {
+        message: `Rate limited until ${decision.limitedUntil}`,
+        limitedUntil: decision.limitedUntil,
+        retryAfter: Math.ceil(decision.retryAfterMs / 1000),
+      },
+    });
+  }
+
   if (!isDbAvailable(defaultDbPath)) {
     throw createError({
       statusCode: 503,
