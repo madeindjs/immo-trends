@@ -1,0 +1,20 @@
+# Deploy with: docker stack deploy -c docker-compose.yml immo-trends
+# On the VPS, set IMAGE before deploying, e.g.:
+#   export IMAGE=ghcr.io/madeindjs/immo-trends:latest
+version: "3"
+services:
+  app:
+    image: ${IMAGE:-ghcr.io/madeindjs/immo-trends}
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 1G
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "5001:3001"
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=3001

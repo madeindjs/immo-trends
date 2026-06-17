@@ -1,0 +1,15 @@
+node_modules
+.output
+data
+dvf.sqlite3
+dvf.sqlite3-journal
+*.sqlite3
+*.sqlite3-journal
+.nuxt
+.git
+.github
+*.md
+scripts/*
+!scripts/draw.utils.ts
+!scripts/draw.utils.spec.ts
+test-data
