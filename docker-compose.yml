@@ -21,15 +21,8 @@ services:
       # SQLite DB path. Resolved by server/utils/dvf-db.ts via process.env.DVF_DB_PATH.
       - DVF_DB_PATH=/app/data/dvf.sqlite3
     volumes:
-      # Named volume persisted across deploys. Mounted on a directory
-      # (not the file directly) because Docker materializes an empty
-      # directory at the mount point when the target path does not
-      # exist in the image — which would trap us writing the SQLite
-      # file *inside* that directory instead of at the expected path.
-      # The entrypoint writes /app/data/dvf.sqlite3 into this volume
-      # on first deploy; subsequent deploys find it already there and
-      # skip the ~6 GB dataset download.
-      - dvf-data:/app/data
+      # Bind mount so the SQLite database lives on the host filesystem
+      # (./data/dvf.sqlite3) and persists across image releases.
+      - ./data:/app/data
 
-volumes:
-  dvf-data:
+# No named volume needed: we use a bind mount for the database.
