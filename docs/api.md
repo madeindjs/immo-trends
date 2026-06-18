@@ -62,6 +62,7 @@ Returns DVF transaction points for the current map bounding box.
 | Status | Meaning |
 |--------|---------|
 | `400` | Missing or invalid query parameters |
+| `429` | Rate limit exceeded. See [rate limiting](rate-limit.md) |
 | `503` | `dvf.sqlite3` is missing. Run `./init.sh` first. |
 
 ### Example
@@ -120,6 +121,7 @@ Each trend point aggregates all qualifying transactions for that period in the b
 | Status | Meaning |
 |--------|---------|
 | `400` | Missing or invalid query parameters |
+| `429` | Rate limit exceeded. See [rate limiting](rate-limit.md) |
 | `503` | `dvf.sqlite3` is missing. Run `./init.sh` first. |
 
 ### Example
