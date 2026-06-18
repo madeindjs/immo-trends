@@ -16,6 +16,13 @@ FROM node:24-alpine AS runner
 
 WORKDIR /app
 
+# Ensure the volume mount point exists in the image. Docker will mount
+# the named dvf-data volume here (see docker-compose.yml). If this
+# directory does not exist in the image, Docker materializes an empty
+# directory at the mount point, which would otherwise nest the SQLite
+# file at /app/data/dvf.sqlite3/dvf.sqlite3 instead of /app/data/dvf.sqlite3.
+RUN mkdir -p /app/data
+
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3001
