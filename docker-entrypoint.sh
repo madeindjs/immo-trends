@@ -21,12 +21,12 @@ DB_FILE="$DATA_DIR/dvf.sqlite3"
 if [ ! -f "$DB_FILE" ]; then
   echo "$DB_FILE not found in volume, initializing database..."
   mkdir -p "$DATA_DIR"
-  cd "$DATA_DIR"
-  # init.sh writes the archive into ./data/ and the SQLite database into
-  # the current directory (./dvf.sqlite3 == /app/data/dvf.sqlite3).
-  /app/init.sh
+  cd /app
+  ./init.sh
+  echo "Moving dvf.sqlite3 into volume..."
+  mv /app/dvf.sqlite3 "$DB_FILE"
   echo "Removing downloaded files to free space..."
-  rm -rf data dvf.csv dvf.csv.gz
+  rm -f data/dvf.csv.gz data/dvf.csv
 else
   echo "$DB_FILE found in volume, skipping initialization."
 fi
