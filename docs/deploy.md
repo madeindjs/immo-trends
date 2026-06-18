@@ -12,8 +12,9 @@ docker stack deploy -c docker-compose.yml immo-trends
 The DVF dataset is large (~6 GB raw, several GB once imported into SQLite). Re-downloading and re-importing it on every image release would make upgrades painfully slow. To avoid that, the SQLite database is persisted in a Docker named volume.
 
 - The stack defines a `dvf-data` volume in `docker-compose.yml`, mounted at `/app/data` inside the container. We mount on a **directory** rather than directly on the SQLite file because, when a volume target does not exist in the image, Docker materializes an empty directory at that path — which would otherwise trap us writing the file at `/app/data/dvf.sqlite3/dvf.sqlite3` instead of `/app/data/dvf.sqlite3`.
+  You do **not** need to create the volume manually beforehand: `docker stack deploy` creates named volumes automatically on first deploy (they are named `<stack-name>_dvf-data`). On later deploys the existing volume is reused.
 - The app reads the database via `process.env.DVF_DB_PATH`, which `docker-compose.yml` sets to `/app/data/dvf.sqlite3`. Locally (no env var), the app falls back to `<cwd>/dvf.sqlite3`.
-- On first deploy, the volume is empty and `/app/data/dvf.sqlite3` is absent. `docker-entrypoint.sh` detects this, runs `./init.sh` from inside `/app/data` (which downloads the archive into `./data/`, decompresses it, imports into SQLite, builds indexes), then deletes the intermediate files to reclaim space. The result is stored in the volume.
+- On first deploy, the volume is empty and `/app/data/dvf.sqlite3` is absent. `docker-entrypoint.sh` detects this, runs `./init.sh` from `/app`, then moves `dvf.sqlite3` into the volume. The intermediate files are cleaned up afterward.
 - On subsequent deploys, `/app/data/dvf.sqlite3` is already in the volume, the entrypoint skips the bootstrap entirely, and the Nuxt server starts immediately.
 
 ## Resetting the volume
