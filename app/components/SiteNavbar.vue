@@ -31,6 +31,11 @@
             </NuxtLink>
           </li>
           <li>
+            <NuxtLink to="/docs/api" :class="{ 'menu-active': isDocs }">
+              API
+            </NuxtLink>
+          </li>
+          <li>
             <NuxtLink to="/about" :class="{ 'menu-active': isAbout }">
               À propos
             </NuxtLink>
@@ -49,6 +54,11 @@
           </NuxtLink>
         </li>
         <li>
+          <NuxtLink to="/docs/api" :class="{ 'menu-active': isDocs }">
+            API
+          </NuxtLink>
+        </li>
+        <li>
           <NuxtLink to="/about" :class="{ 'menu-active': isAbout }">
             À propos
           </NuxtLink>
@@ -63,4 +73,5 @@
 const route = useRoute();
 const isHome = computed(() => route.path === "/");
 const isAbout = computed(() => route.path === "/about");
+const isDocs = computed(() => route.path.startsWith("/docs"));
 </script>
