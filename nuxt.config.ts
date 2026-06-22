@@ -32,5 +32,21 @@ export default defineNuxtConfig({
         compilerOptions: typescriptCompilerOptions,
       },
     },
+    experimental: {
+      openAPI: true,
+    },
+    openAPI: {
+      production: "prerender",
+      meta: {
+        title: "immo-trends API",
+        description:
+          "Interactive API documentation for immo-trends DVF endpoints.",
+        version: "1.0.0",
+      },
+      ui: {
+        swagger: false,
+        scalar: false,
+      },
+    },
   },
 });
