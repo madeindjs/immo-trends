@@ -51,6 +51,39 @@ const SWAGGER_SCRIPT_URL = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagg
 
 const PUBLIC_API_PATHS = new Set(["/api/dvf", "/api/dvf-trends"]);
 
+let themeMediaQuery: MediaQueryList | null = null;
+let themeChangeHandler: ((event: MediaQueryListEvent) => void) | null = null;
+
+function applyTheme(isDark: boolean): void {
+  const html = document.documentElement;
+  if (isDark) {
+    html.classList.add("dark-mode");
+    html.setAttribute("data-theme", "dark");
+  } else {
+    html.classList.remove("dark-mode");
+    html.removeAttribute("data-theme");
+  }
+}
+
+function syncTheme(): void {
+  themeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  applyTheme(themeMediaQuery.matches);
+
+  themeChangeHandler = (event) => {
+    applyTheme(event.matches);
+  };
+  themeMediaQuery.addEventListener("change", themeChangeHandler);
+}
+
+function cleanupTheme(): void {
+  if (themeMediaQuery && themeChangeHandler) {
+    themeMediaQuery.removeEventListener("change", themeChangeHandler);
+  }
+  themeMediaQuery = null;
+  themeChangeHandler = null;
+  applyTheme(false);
+}
+
 async function loadSpec(): Promise<Record<string, unknown>> {
   const response = await fetch("/_openapi.json");
   if (!response.ok) {
@@ -152,7 +185,12 @@ function loadSwaggerScript(): void {
 }
 
 onMounted(() => {
+  syncTheme();
   loadSwaggerScript();
+});
+
+onBeforeUnmount(() => {
+  cleanupTheme();
 });
 </script>
 
