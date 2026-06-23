@@ -2,6 +2,7 @@ import { createError, defineEventHandler, getRequestIP, getRouterParam, setRespo
 import { checkRateLimit } from "../../utils/rate-limit.ts";
 import {
   defaultDbPath,
+  handleDvfDbError,
   isDbAvailable,
   queryDvfByRowid,
 } from "../../utils/dvf-db.ts";
@@ -49,7 +50,12 @@ export default defineEventHandler((event) => {
   }
 
   const rowid = parseRowid(getRouterParam(event, "rowid"));
-  const row = queryDvfByRowid(rowid);
+  let row;
+  try {
+    row = queryDvfByRowid(rowid);
+  } catch (error) {
+    handleDvfDbError(error);
+  }
 
   if (!row) {
     throw createError({

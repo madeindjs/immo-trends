@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { createError } from "h3";
 import { getMedian, getPriceStats } from "../../scripts/draw.utils.ts";
 import type {
   DvfMapPoint,
@@ -203,6 +204,24 @@ export function isDbAvailable(dbPath: string = defaultDbPath): boolean {
   return fs.existsSync(dbPath);
 }
 
+export function handleDvfDbError(error: unknown): never {
+  const sqliteError = error as {
+    code?: string;
+    errcode?: number;
+    errstr?: string;
+  };
+
+  if (sqliteError?.code === "ERR_SQLITE_ERROR") {
+    throw createError({
+      statusCode: 503,
+      statusMessage: `DVF database is unavailable (${sqliteError.errstr ?? "SQLite error"})`,
+      cause: error,
+    });
+  }
+
+  throw error;
+}
+
 type DvfTrendPriceRow = {
   month: string;
   price_per_sqm: number;
@@ -225,7 +244,7 @@ export function queryDvfPriceTrends(
   dbPath: string = defaultDbPath,
   groupBy: DvfTrendGroupBy = "month",
 ): DvfPriceTrendPoint[] {
-  const db = new DatabaseSync(dbPath);
+  const db = new DatabaseSync(dbPath, { readOnly: true });
 
   try {
     const { conditions, params } = buildWhereClause(bounds, filters);
@@ -277,7 +296,7 @@ export function queryDvfInBounds(
   filters: DvfQueryFilters,
   dbPath: string = defaultDbPath,
 ): { points: DvfMapPoint[]; truncated: boolean; stats: DvfMapStats } {
-  const db = new DatabaseSync(dbPath);
+  const db = new DatabaseSync(dbPath, { readOnly: true });
 
   try {
     const { conditions, params } = buildWhereClause(bounds, filters);
@@ -322,7 +341,7 @@ export function queryDvfByRowid(
   rowid: number,
   dbPath: string = defaultDbPath,
 ): DvfRowDetail | null {
-  const db = new DatabaseSync(dbPath);
+  const db = new DatabaseSync(dbPath, { readOnly: true });
 
   try {
     const row = db

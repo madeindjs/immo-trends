@@ -2,6 +2,7 @@ import { createError, defineEventHandler, getQuery, getRequestIP, setResponseHea
 import { checkRateLimit } from "../utils/rate-limit.ts";
 import {
   defaultDbPath,
+  handleDvfDbError,
   isDbAvailable,
   queryDvfPriceTrends,
 } from "../utils/dvf-db.ts";
@@ -256,7 +257,11 @@ export default defineEventHandler((event) => {
     });
   }
 
-  return {
-    trends: queryDvfPriceTrends(bounds, filters, defaultDbPath, groupBy),
-  };
+  try {
+    return {
+      trends: queryDvfPriceTrends(bounds, filters, defaultDbPath, groupBy),
+    };
+  } catch (error) {
+    handleDvfDbError(error);
+  }
 });

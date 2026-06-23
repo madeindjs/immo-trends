@@ -67,3 +67,9 @@ gunzip -f -k "$DVF_ARCHIVE"
 
 # Import into SQLite and build map query indexes
 sqlite3 dvf.sqlite3 < init.sql
+
+# Verify the database is not corrupted after import
+if ! sqlite3 dvf.sqlite3 'PRAGMA quick_check;' >/dev/null 2>&1; then
+  echo "Database integrity check failed after import" >&2
+  exit 1
+fi
