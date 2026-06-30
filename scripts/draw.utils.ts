@@ -39,12 +39,21 @@ export function getPriceStats(prices: number[]): PriceStats | null {
   const validPrices = prices.filter((p) => p != null && !isNaN(p));
   if (validPrices.length === 0) return null;
 
+  let min: number = validPrices[0]!;
+  let max: number = validPrices[0]!;
+  let sum = 0;
+  for (const price of validPrices) {
+    if (price < min) min = price;
+    if (price > max) max = price;
+    sum += price;
+  }
+
   return {
     prices: validPrices,
     median: getMedian(validPrices),
-    average: validPrices.reduce((a, b) => a + b, 0) / validPrices.length,
-    min: Math.min(...validPrices),
-    max: Math.max(...validPrices),
+    average: sum / validPrices.length,
+    min,
+    max,
     count: validPrices.length,
   };
 }

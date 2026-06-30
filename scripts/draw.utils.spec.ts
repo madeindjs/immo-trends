@@ -110,3 +110,16 @@ describe("calculatePricePerSqm", () => {
     assert.strictEqual(calculatePricePerSqm("", 50), null);
   });
 });
+
+describe("getPriceStats large arrays", () => {
+  it("should handle arrays too large for Math.min/max spread", () => {
+    const count = 200_000;
+    const prices = Array.from({ length: count }, (_, index) => index + 1);
+    const stats = getPriceStats(prices);
+    assert.notStrictEqual(stats, null);
+    assert.strictEqual(stats?.count, count);
+    assert.strictEqual(stats?.min, 1);
+    assert.strictEqual(stats?.max, count);
+    assert.strictEqual(stats?.median, (count / 2 + count / 2 + 1) / 2);
+  });
+});
